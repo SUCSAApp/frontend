@@ -9,7 +9,7 @@ class ActivityPage extends StatefulWidget {
 
 class _ActivityPageState extends State<ActivityPage> {
   int _currentIndex = 0;
-  final List<String> _images = ["assets/图书馆.png", "assets/摆摊.png"];
+  final List<String> _images = ["lib/assets/图书馆.png", "lib/assets/摆摊.png"];
   late final PageController _pageController;
 
   @override

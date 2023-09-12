@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sucsa_app/text/liuyan.dart';
 import '../activity/activity_page.dart';
 import '../shangjia/offer_page.dart';
 import '../Mysucsa/my_sucsa_page.dart';
+// Assuming the NavBar is in the same directory
+ import 'package:sucsa_app/Components/navbar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -22,7 +25,7 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(30.0),
-                child: Image.asset('assets/mainpage.PNG'),
+                child: Image.asset('lib/assets/mainpage.PNG'),
               ),
               const Text(
                 '悉尼大学中国学联',
@@ -33,7 +36,7 @@ class _HomePageState extends State<HomePage> {
         ),
 
         // You can add more widgets here to be part of the scrollable content
-      //   add a widget to place some text
+        //   add a widget to place some text
         const Padding(padding: EdgeInsets.only(top:10.0),
           child: Stack(
             alignment: Alignment.center,
@@ -49,23 +52,17 @@ class _HomePageState extends State<HomePage> {
       ],
     ),
     const ActivityPage(),
+    const textPage(),
     const OfferPage(),
     const MySUCSAPage(),
   ];
 
-  final List<String> _pageTitles = [
-    'SUCSA',
-    '活动',
-    '优惠',
-    '我的',
-  ];
-
-
-  void _onItemTapped(int index) {
+  void _onNavBarItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +70,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
         title: Text(
-          _pageTitles[_selectedIndex],
+          NavBar.pageTitles[_selectedIndex],
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -83,31 +80,9 @@ class _HomePageState extends State<HomePage> {
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '主页',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.accessibility_new),
-            label: '活动',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: '优惠',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '我的',
-          ),
-        ],
+      bottomNavigationBar: NavBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color.fromRGBO(29, 32, 136, 1.0),
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        onItemSelected: _onNavBarItemTapped,
       ),
     );
   }
