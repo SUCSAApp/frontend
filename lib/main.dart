@@ -4,6 +4,7 @@ import 'Homepage/home_page.dart';
 void main() {
   runApp(const MyApp());
 }
+
 Color myColor = const Color.fromRGBO(29,32,136,1.0);
 // this is the main page of the app
 class MyApp extends StatelessWidget {

@@ -65,9 +65,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/mainpage.PNG
-    - assets/图书馆.png
-    - assets/摆摊.png
+    - lib/assets/mainpage.PNG
+    - lib/assets/图书馆.png
+    - lib/assets/摆摊.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -84,9 +84,9 @@ flutter:
   fonts:
      - family: Microsoft YaHei
        fonts:
-         - asset: assets/fonts/msyh.ttf
+         - asset: lib/assets/fonts/msyh.ttf
 
      - family: Microsoft YaHei Bold
        fonts:
-         - asset: assets/fonts/msyhbd.ttf
+         - asset: lib/assets/fonts/msyhbd.ttf
 
