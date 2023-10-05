@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sucsa_app/text/liuyan.dart';
+import 'package:sucsa_app/Alumini/alumimi.dart';
 import '../activity/activity_page.dart';
-import '../shangjia/offer_page.dart';
+import '../shangjia/store.dart';
 import '../Mysucsa/my_sucsa_page.dart';
 // Assuming the NavBar is in the same directory
  import 'package:sucsa_app/Components/navbar.dart';
@@ -37,24 +37,12 @@ class _HomePageState extends State<HomePage> {
         ),
 
         // You can add more widgets here to be part of the scrollable content
-        //   add a widget to place some text
-        const Padding(padding: EdgeInsets.only(top:10.0),
-          child: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Text(
-                '我们是谁？',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
-              )
-            ],
-          ),
-        ),
-
+        //   add a widget to place some tex
       ],
     ),
     const ActivityPage(),
-    const textPage(),
-    const OfferPage(),
+    const storepage(),
+    const aluminiPage(),
     const MySUCSAPage(),
   ];
 

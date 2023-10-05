@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class OfferPage extends StatefulWidget {
-  const OfferPage({super.key});
+class storepage extends StatefulWidget {
+  const storepage({super.key});
 
   @override
-  State<OfferPage> createState() => _OfferPageState();
+  State<storepage> createState() => _storepageState();
 }
 
-class _OfferPageState extends State<OfferPage> {
+class _storepageState extends State<storepage> {
   @override
   Widget build(BuildContext context) {
     return const Text(
