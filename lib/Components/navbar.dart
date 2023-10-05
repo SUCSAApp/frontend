@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
 
@@ -42,12 +43,12 @@ class _NavBarState extends State<NavBar> {
           label: '活动',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.accessibility_new),
-          label: '留言',
+          icon: Icon(Icons.account_balance_wallet),
+          label: '商家',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.account_balance_wallet),
-          label: '优惠',
+          icon: Icon(FontAwesomeIcons.graduationCap),
+          label: '校友会',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),
