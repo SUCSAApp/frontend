@@ -14,7 +14,7 @@
 
 | **框架** | Flutter                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | --- |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **下载** | [https://docs.flutter.dev/get-started/install](https://docs.flutter.dev/get-started/install)  <br/>Setup for Windows:   <br/>[https://www.youtube.com/watch?v=CD1Y2DmL5JM](https://www.youtube.com/watch?v=CD1Y2DmL5JM)  <br/>Setup for macOS:  <br/>https://docs.flutter.dev/get-started/install/macos  <br/>https://docs.flutter.dev/get-started/install/macos  <br/>[https://www.youtube.com/watch?v=fzAg7lOWqVE](https://www.youtube.com/watch?v=fzAg7lOWqVE) |
+| **下载** | [https://docs.flutter.dev/get-started/install](https://docs.flutter.dev/get-started/install)  <br/>Setup for Windows:   <br/>[https://www.youtube.com/watch?v=CD1Y2DmL5JM](https://www.youtube.com/watch?v=CD1Y2DmL5JM)  <br/>Setup for macOS:    <br/>https://docs.flutter.dev/get-started/install/macos  <br/>[https://www.youtube.com/watch?v=fzAg7lOWqVE](https://www.youtube.com/watch?v=fzAg7lOWqVE) |
 | **Tutorial** | [https://docs.flutter.dev/ui](https://docs.flutter.dev/ui)                                                                                                                                                                                                                                                                                                                                                                                                   |
 | **Docs** | [https://docs.flutter.dev/](https://docs.flutter.dev/)                                                                                                                                                                                                                                                                                                                                                                                                       |
 | **Build Commands** | `Flutter Run` `Flutter build ios – –release` `Flutter build android – – release`……                                                                                                                                                                                                                                                                                                                                                                           |
@@ -46,8 +46,8 @@
     - Usability test
     - 兼容性测试
     - 性能测试
-    - 压力测试
-    - 负载测试
+        压力测试
+        负载测试
     - 界面测试（UI）
     - 安全性测试
     - 用户测试
