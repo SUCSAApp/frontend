@@ -26,15 +26,75 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(30.0),
-                child: Image.asset('lib/assets/mainpage.PNG'),
+                child: Image.asset('lib/assets/mainpage.PNG',height: 200,),
               ),
-              const Text(
-                '悉尼大学中国学联',
-                style: TextStyle(fontSize: 45, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
+              const Column(
+                children: [
+                  Text(
+                    '悉尼大学中国学联',
+                    style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  Text(
+                    'Sydney University Chinese Students &',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  Text(
+                    'Scholars Association',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                    )
+                ],
+              )
+              
             ],
           ),
         ),
+
+        Padding(
+          padding: const EdgeInsets.only(top: 10.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Image.asset('lib/assets/官方组织.png', height: 100,),
+              Image.asset('lib/assets/第三方合作.png', height: 100,),]),
+        ),
+
+        const Padding(
+          padding: EdgeInsets.only(top: 10.0, left: 20.0),
+          child: Text('最新动态', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
+        ),
+
+        Container(
+              margin: const EdgeInsets.all(10.0),
+              child: Card(
+                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10.0))),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(10.0),
+                        topRight: Radius.circular(10.0),
+                      ),
+                      child: Image.asset('lib/assets/图书馆.png', height: 150, fit: BoxFit.fill,),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        const Expanded(
+                          child: ListTile(
+                            title: Text('推文1'),
+                            subtitle: Text('万圣节'),
+                          )
+                        ),
+                        Image.asset('lib/assets/查看详情.png', height: 40,),
+                      ],
+                    ),
+                    
+                  ],
+                ),
+              ),
+            )
+        
 
         // You can add more widgets here to be part of the scrollable content
         //   add a widget to place some tex
@@ -51,7 +111,7 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
   }
-
+  
 
   @override
   Widget build(BuildContext context) {
