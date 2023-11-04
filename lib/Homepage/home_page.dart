@@ -35,9 +35,6 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-
-        // You can add more widgets here to be part of the scrollable content
-        //   add a widget to place some tex
       ],
     ),
     const ActivityPage(),
