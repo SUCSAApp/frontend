@@ -26,12 +26,25 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(30.0),
-                child: Image.asset('lib/assets/mainpage.PNG'),
+                child: Image.asset('lib/assets/mainpage.PNG',height: 200,),
               ),
-              const Text(
-                '悉尼大学中国学联',
-                style: TextStyle(fontSize: 45, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
+              const Column(
+                children: [
+                  Text(
+                    '悉尼大学中国学联',
+                    style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  Text(
+                    'Sydney University Chinese Students &',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  Text(
+                    'Scholars Association',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                    )
+                ],
+              )
+              
             ],
           ),
         ),
@@ -48,7 +61,7 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
   }
-
+  
 
   @override
   Widget build(BuildContext context) {
