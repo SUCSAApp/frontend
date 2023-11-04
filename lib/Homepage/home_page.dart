@@ -44,14 +44,14 @@ class _HomePageState extends State<HomePage> {
                     )
                 ],
               )
-              
+
             ],
           ),
         ),
       ],
     ),
     const ActivityPage(),
-    const storepage(),
+    const StorePage(),
     const aluminiPage(),
     const MySUCSAPage(),
   ];
@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
   }
-  
+
 
   @override
   Widget build(BuildContext context) {
