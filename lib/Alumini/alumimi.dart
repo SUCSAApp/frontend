@@ -6,7 +6,7 @@ class aluminiPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text(
-      '留言',
+      '校友会',
       style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
     );
   }
