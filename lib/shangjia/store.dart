@@ -37,6 +37,13 @@ class _StorePageState extends State<StorePage> {
   }
 
   // Toggle between list and grid view
+  // void _toggleView() {
+  //   setState(() {
+  //     _isListView = !_isListView;
+  //   });
+  // }
+
+  // Toggle between list and grid view
 
   void _switchToListView() {
     setState(() {
@@ -80,23 +87,6 @@ class _StorePageState extends State<StorePage> {
                 },
               ),
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: _switchToGridView,
-                    icon: Icon(Icons.grid_view),
-                    iconSize: 30.0, // Set width and height to be equal
-                  ),
-                  SizedBox(width: 0), // Small gap between the two icons
-                  IconButton(
-                    onPressed: _switchToListView,
-                    icon: Icon(Icons.list),
-                    iconSize: 40.0, // Set width and height to be equal
-                  ),
-                ],
     // """get info from backend"""
       // FutureBuilder<List<ListItem>>(
       // future: fetchListItems(),
@@ -112,7 +102,7 @@ class _StorePageState extends State<StorePage> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
-                onPressed: _toggleView,
+                onPressed: _switchToGridView,
                 style: ElevatedButton.styleFrom(
                   primary: Theme.of(context).primaryColor,
                   shape: RoundedRectangleBorder(
@@ -132,6 +122,17 @@ class _StorePageState extends State<StorePage> {
   }
 
   // Build list view
+  // Widget _buildListView() {
+  //   return ListView.builder(
+  //     physics: const NeverScrollableScrollPhysics(), // to disable ListView's own scrolling
+  //     shrinkWrap: true, // Use this to fit the ListView in the SingleChildScrollView
+  //     itemCount: 20,
+  //     itemBuilder: (context, index) => ListTile(
+  //       title: Text('列表项 $index'),
+  //     ),
+  //   );
+  // }
+
   Widget _buildListView() {
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
@@ -153,6 +154,24 @@ class _StorePageState extends State<StorePage> {
       ),
     );
   }
+
+  // Build grid view
+  // Widget _buildGridView() {
+  //   return GridView.builder(
+  //     physics: const NeverScrollableScrollPhysics(), // to disable GridView's own scrolling
+  //     shrinkWrap: true, // Use this to fit the GridView in the SingleChildScrollView
+  //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //       crossAxisCount: 2,
+  //       childAspectRatio: 1.0,
+  //     ),
+  //     itemCount: 20,
+  //     itemBuilder: (context, index) => GridTile(
+  //       child: Container(
+  //         alignment: Alignment.center,
+  //         child: Text('网格项 $index'),
+  //       ),
+  //     ),
+  //   );
 
   // Build grid view
   Widget _buildGridView() {
@@ -221,3 +240,4 @@ class _StorePageState extends State<StorePage> {
     );
   }
 }
+
