@@ -37,6 +37,7 @@ class _StorePageState extends State<StorePage> {
   }
 
   // Toggle between list and grid view
+
   void _switchToListView() {
     setState(() {
       _isListView = true;
@@ -46,6 +47,7 @@ class _StorePageState extends State<StorePage> {
   void _switchToGridView() {
     setState(() {
       _isListView = false;
+
     });
   }
 
@@ -95,6 +97,30 @@ class _StorePageState extends State<StorePage> {
                     iconSize: 40.0, // Set width and height to be equal
                   ),
                 ],
+    // """get info from backend"""
+      // FutureBuilder<List<ListItem>>(
+      // future: fetchListItems(),
+      // builder: (context, snapshot) {
+      // if (snapshot.connectionState == ConnectionState.waiting) {
+      // return CircularProgressIndicator();
+      // } else if (snapshot.hasError) {
+      // return Text('Error: ${snapshot.error}');
+      // } else {
+      //
+      // final items = snapshot.data!;
+      // return _isListView ? _buildListView(items) : _buildGridView(items);
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: _toggleView,
+                style: ElevatedButton.styleFrom(
+                  primary: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.0),
+                  ),
+                ),
+                child: Icon(_isListView ? Icons.grid_view : Icons.list),
+
               ),
             ),
             // The default view is now GridView
@@ -117,6 +143,13 @@ class _StorePageState extends State<StorePage> {
       ),
       itemBuilder: (context, index) => ListTile(
         title: Text('佩姐火锅 $index 号'),
+//     return ListView.builder(
+//       physics: const NeverScrollableScrollPhysics(), // to disable ListView's own scrolling
+//       shrinkWrap: true, // Use this to fit the ListView in the SingleChildScrollView
+//       itemCount: 20,
+//       itemBuilder: (context, index) => ListTile(
+//         title: Text('列表项 $index'),
+
       ),
     );
   }
@@ -171,6 +204,18 @@ class _StorePageState extends State<StorePage> {
               ],
             ),
           ),
+//     return GridView.builder(
+//       physics: const NeverScrollableScrollPhysics(), // to disable GridView's own scrolling
+//       shrinkWrap: true, // Use this to fit the GridView in the SingleChildScrollView
+//       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+//         crossAxisCount: 2,
+//         childAspectRatio: 1.0,
+//       ),
+//       itemCount: 20,
+//       itemBuilder: (context, index) => GridTile(
+//         child: Container(
+//           alignment: Alignment.center,
+//           child: Text('网格项 $index'),
         ),
       ),
     );
