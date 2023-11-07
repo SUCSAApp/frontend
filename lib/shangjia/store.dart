@@ -61,9 +61,6 @@ class _StorePageState extends State<StorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('商家'),
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
