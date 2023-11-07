@@ -17,8 +17,8 @@ class NavBar extends StatefulWidget {
   static const List<String> pageTitles = [
     'SUCSA',
     '活动',
-    '留言',
-    '优惠',
+    '商家',
+    '校友会',
     '我的',
   ];
 

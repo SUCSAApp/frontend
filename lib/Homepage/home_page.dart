@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> {
     ),
     const ActivityPage(),
     const StorePage(),
-    const aluminiPage(),
+    const AlumniPage(),
     const MySUCSAPage(),
   ];
 

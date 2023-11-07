@@ -73,6 +73,7 @@ flutter:
     - lib/assets/官方组织.png
     - lib/assets/第三方合作.png
     - lib/assets/查看详情.png
+    - lib/assets/alumni_map.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

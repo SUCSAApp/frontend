@@ -37,18 +37,30 @@ class _StorePageState extends State<StorePage> {
   }
 
   // Toggle between list and grid view
-  void _toggleView() {
+  // void _toggleView() {
+  //   setState(() {
+  //     _isListView = !_isListView;
+  //   });
+  // }
+
+  // Toggle between list and grid view
+
+  void _switchToListView() {
     setState(() {
-      _isListView = !_isListView;
+      _isListView = true;
+    });
+  }
+
+  void _switchToGridView() {
+    setState(() {
+      _isListView = false;
+
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('商家'),
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -87,7 +99,7 @@ class _StorePageState extends State<StorePage> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
-                onPressed: _toggleView,
+                onPressed: _switchToGridView,
                 style: ElevatedButton.styleFrom(
                   primary: Theme.of(context).primaryColor,
                   shape: RoundedRectangleBorder(
@@ -95,6 +107,7 @@ class _StorePageState extends State<StorePage> {
                   ),
                 ),
                 child: Icon(_isListView ? Icons.grid_view : Icons.list),
+
               ),
             ),
             // The default view is now GridView
@@ -106,33 +119,122 @@ class _StorePageState extends State<StorePage> {
   }
 
   // Build list view
+  // Widget _buildListView() {
+  //   return ListView.builder(
+  //     physics: const NeverScrollableScrollPhysics(), // to disable ListView's own scrolling
+  //     shrinkWrap: true, // Use this to fit the ListView in the SingleChildScrollView
+  //     itemCount: 20,
+  //     itemBuilder: (context, index) => ListTile(
+  //       title: Text('列表项 $index'),
+  //     ),
+  //   );
+  // }
+
   Widget _buildListView() {
-    return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(), // to disable ListView's own scrolling
-      shrinkWrap: true, // Use this to fit the ListView in the SingleChildScrollView
+    return ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       itemCount: 20,
+      separatorBuilder: (context, index) => const Divider(
+        color: Colors.grey, // Set the color of the line
+        height: 1, // Set the thickness of the line
+      ),
       itemBuilder: (context, index) => ListTile(
-        title: Text('列表项 $index'),
+        title: Text('佩姐火锅 $index 号'),
+//     return ListView.builder(
+//       physics: const NeverScrollableScrollPhysics(), // to disable ListView's own scrolling
+//       shrinkWrap: true, // Use this to fit the ListView in the SingleChildScrollView
+//       itemCount: 20,
+//       itemBuilder: (context, index) => ListTile(
+//         title: Text('列表项 $index'),
+
       ),
     );
   }
 
   // Build grid view
+  // Widget _buildGridView() {
+  //   return GridView.builder(
+  //     physics: const NeverScrollableScrollPhysics(), // to disable GridView's own scrolling
+  //     shrinkWrap: true, // Use this to fit the GridView in the SingleChildScrollView
+  //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //       crossAxisCount: 2,
+  //       childAspectRatio: 1.0,
+  //     ),
+  //     itemCount: 20,
+  //     itemBuilder: (context, index) => GridTile(
+  //       child: Container(
+  //         alignment: Alignment.center,
+  //         child: Text('网格项 $index'),
+  //       ),
+  //     ),
+  //   );
+
+  // Build grid view
   Widget _buildGridView() {
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(), // to disable GridView's own scrolling
-      shrinkWrap: true, // Use this to fit the GridView in the SingleChildScrollView
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.0,
-      ),
-      itemCount: 20,
-      itemBuilder: (context, index) => GridTile(
-        child: Container(
-          alignment: Alignment.center,
-          child: Text('网格项 $index'),
+    return Padding(
+      padding: const EdgeInsets.all(10.0), // Add padding to create gaps
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.75,
+          mainAxisSpacing: 16.0, // Vertical gap between grid items
+          crossAxisSpacing: 16.0, // Horizontal gap between grid items
+        ),
+        itemCount: 20,
+        itemBuilder: (context, index) => GridTile(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.0),
+                Text('佩姐火锅 $index 号'),
+              ],
+            ),
+          ),
+//     return GridView.builder(
+//       physics: const NeverScrollableScrollPhysics(), // to disable GridView's own scrolling
+//       shrinkWrap: true, // Use this to fit the GridView in the SingleChildScrollView
+//       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+//         crossAxisCount: 2,
+//         childAspectRatio: 1.0,
+//       ),
+//       itemCount: 20,
+//       itemBuilder: (context, index) => GridTile(
+//         child: Container(
+//           alignment: Alignment.center,
+//           child: Text('网格项 $index'),
         ),
       ),
     );
   }
 }
+
