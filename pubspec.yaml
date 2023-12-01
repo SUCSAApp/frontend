@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   url_launcher: ^6.0.0
+  http: ^1.0.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -74,6 +75,7 @@ flutter:
     - lib/assets/第三方合作.png
     - lib/assets/查看详情.png
     - lib/assets/alumni_map.png
+    - lib/assets/学联媒体平台.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
