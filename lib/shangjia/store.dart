@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // Restaurant model class
 class Restaurant {
@@ -250,9 +251,6 @@ class DetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(restaurant.title),
-      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,13 +355,16 @@ class DetailPage extends StatelessWidget {
 }
 
 Future<Position> getCurrentLocation() async {
-  LocationPermission permission = await Geolocator.requestPermission();
+  PermissionStatus locationPermissionStatus = await Permission.location.status;
+  if (locationPermissionStatus != PermissionStatus.granted) {
+    await requestLocationPermission();
+  }
   return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 }
 
 Future<double> _calculateDistance(Restaurant restaurant) async {
-  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
+  bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!isLocationServiceEnabled) {
     return Future.error('Location services are disabled.');
   }
 
@@ -389,6 +390,22 @@ Future<double> _calculateDistance(Restaurant restaurant) async {
   );
   return distanceInMeters / 1000;
 }
+
+Future<void> requestLocationPermission() async {
+  final status = await Permission.location.request();
+  if (status.isGranted) {
+    // Permission granted, you can now use location services.
+  } else {
+    // Permission denied.
+    if (status.isDenied) {
+      // The user denied the permission once, you can explain why you need it and request again.
+    } else if (status.isPermanentlyDenied) {
+      // The user permanently denied the permission. You can open app settings to allow the user to enable it manually.
+      openAppSettings();
+    }
+  }
+}
+
 
 void launchMap(String address) async {
   final url = Uri.encodeFull('https://www.google.com/maps/search/?api=1&query=$address');
