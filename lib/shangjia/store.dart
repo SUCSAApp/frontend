@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:io' show Platform;
+
 
 // Restaurant model class
 class Restaurant {
@@ -106,11 +108,73 @@ class _StorePageState extends State<StorePage> {
     }
   }
 
+  String? selectedTag;
+
+  void _showFilterDialog() async {
+    // Generate a list of tags from the restaurants. You might want to do this once and keep it in the state if it doesn't change often.
+    final tags = restaurants.expand((restaurant) => restaurant.tags?.split(',') ?? []).toSet().toList();
+
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Select a tag to filter by'),
+        children: tags
+            .map(
+              (tag) => SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, tag),
+            child: Text(tag),
+          ),
+        )
+            .toList(),
+      ),
+    );
+
+    if (selected != null) {
+      setState(() {
+        selectedTag = selected;
+        // Filter the restaurants list
+        restaurants = restaurants.where((restaurant) {
+          // If there are no tags or the selectedTag is null, include the restaurant in the list.
+          if (restaurant.tags == null || selectedTag == null) {
+            return true;
+          }
+          List<String> tagsList = restaurant.tags!.split(',');
+          return tagsList.contains(selectedTag!);
+        }).toList();
+      });
+    }
+  }
+
+  void clearFilter() {
+    setState(() {
+      selectedTag = null;
+      fetchRestaurants(); // This assumes fetchRestaurants() will reset the restaurants list to unfiltered data.
+    });
+  }
+
+  Widget buildFilterChip() {
+    if (selectedTag != null) {
+      return Container(
+        padding: EdgeInsets.all(10),
+        child: Chip(
+          label: Text(selectedTag!),
+          onDeleted: clearFilter,
+        ),
+      );
+    } else {
+      return Container(); // Return an empty container when there's no filter selected.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _showFilterDialog, // Call the filter dialog function
+          ),
           IconButton(
             icon: Icon(isListView ? Icons.grid_view : Icons.list), // Change the icon based on the view type
             onPressed: () {
@@ -123,7 +187,14 @@ class _StorePageState extends State<StorePage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : isListView ? buildListView() : buildGridView(), // Use a ternary operator to switch views
+          : Column(
+        children: [
+          if (selectedTag != null) buildFilterChip(), // Only build the filter chip if there's a selected tag
+          Expanded(
+            child: isListView ? buildListView() : buildGridView(),
+          ),
+        ],
+      ),
     );
   }
   Widget buildListView() {
@@ -135,23 +206,20 @@ class _StorePageState extends State<StorePage> {
         return FutureBuilder<double>(
           future: _calculateDistance(restaurant),
           builder: (context, snapshot) {
+            Widget content;
+
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return ListTile(
+              content = ListTile(
                 title: Text('Calculating distance...'),
               );
-            }
-
-            if (snapshot.hasError) {
-              return ListTile(
+            } else if (snapshot.hasError) {
+              content = ListTile(
                 title: Text('Error: ${snapshot.error}'),
               );
-            }
+            } else {
+              String distance = snapshot.data != null ? '${snapshot.data!.toStringAsFixed(2)} km' : 'Distance not available';
 
-            String distance = snapshot.data != null ? '${snapshot.data!.toStringAsFixed(2)} km' : 'Distance not available';
-
-            return Card(
-              margin: EdgeInsets.all(10),
-              child: ListTile(
+              content = ListTile(
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(4.0),
                   child: Image.network(
@@ -187,7 +255,12 @@ class _StorePageState extends State<StorePage> {
                   ],
                 ),
                 onTap: () => openDetailPage(restaurant),
-              ),
+              );
+            }
+
+            return Card(
+              margin: EdgeInsets.all(10),
+              child: content,
             );
           },
         );
@@ -196,40 +269,55 @@ class _StorePageState extends State<StorePage> {
   }
 
 
+
   Widget buildGridView() {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.0,
+        crossAxisCount: 2, // Number of columns
+        childAspectRatio: 1.0, // Aspect ratio of each grid cell
       ),
-      itemCount: restaurants.length,
+      itemCount: restaurants.length, // Total number of items
       itemBuilder: (context, index) {
-        final restaurant = restaurants[index];
+        final restaurant = restaurants[index]; // Current restaurant item
 
-        return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DetailPage(restaurant: restaurant),
-            ),
+        return Card(
+          elevation: 4.0, // Shadow effect under the card
+          margin: EdgeInsets.all(8.0), // Margin around each card
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0), // Rounded corners
           ),
-          child: GridTile(
-            footer: GridTileBar(
-              backgroundColor: Colors.black45,
-              title: Text(
-                restaurant.title,
-                style: const TextStyle(
-                  fontFamily: 'Microsoft YaHei',
-                ),
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailPage(restaurant: restaurant),
               ),
             ),
-            child: Image.network(restaurant.img, fit: BoxFit.cover),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch the column to fill the card
+              children: <Widget>[
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)), // Rounded corners at the top
+                    child: Image.network(restaurant.img, fit: BoxFit.cover), // Restaurant image
+                  ),
+                ),
+                ListTile(
+                  title: Text(
+                    restaurant.title,
+                    style: const TextStyle(
+                      fontFamily: 'Microsoft YaHei',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
-
     );
   }
+
 
 
 
@@ -251,11 +339,15 @@ class DetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color.fromRGBO(29, 32, 136, 1.0), // Use your preferred color
+      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20),
+            // Remove the SizedBox that was previously used to create space
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: ClipRRect(
@@ -340,7 +432,7 @@ class DetailPage extends StatelessWidget {
                     onPressed: () => launchMap(restaurant.address),
                     child: Text('Open in Maps'),
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.blue, // Button color
+                      primary: Color.fromRGBO(29, 32, 136, 1.0), // Button color
                       onPrimary: Colors.white, // Text color
                     ),
                   ),
@@ -355,63 +447,63 @@ class DetailPage extends StatelessWidget {
 }
 
 Future<Position> getCurrentLocation() async {
-  PermissionStatus locationPermissionStatus = await Permission.location.status;
-  if (locationPermissionStatus != PermissionStatus.granted) {
-    await requestLocationPermission();
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
   }
+
+  if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+    // Return an error or an invalid position, or handle this scenario appropriately.
+    return Future.error('Location permission not granted');
+  }
+
   return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 }
 
 Future<double> _calculateDistance(Restaurant restaurant) async {
   bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!isLocationServiceEnabled) {
-    return Future.error('Location services are disabled.');
+    // Instead of returning an error, handle this scenario in a way that doesn't disrupt the user experience.
+    // For example, you could return a default high value to indicate that the distance can't be calculated.
+    return double.maxFinite;
   }
 
-  LocationPermission permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      return Future.error('Location permissions are denied');
-    }
+  try {
+    Position currentPosition = await getCurrentLocation();
+    double distanceInMeters = Geolocator.distanceBetween(
+      currentPosition.latitude,
+      currentPosition.longitude,
+      restaurant.latitude ?? 0,
+      restaurant.longitude ?? 0,
+    );
+    return distanceInMeters / 1000;
+  } catch (e) {
+    // Handle the exception in a way that doesn't disrupt the user experience.
+    return double.maxFinite;
   }
-
-  if (permission == LocationPermission.deniedForever) {
-    return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.');
-  }
-
-  Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-  double distanceInMeters = Geolocator.distanceBetween(
-    currentPosition.latitude,
-    currentPosition.longitude,
-    restaurant.latitude ?? 0,
-    restaurant.longitude ?? 0,
-  );
-  return distanceInMeters / 1000;
 }
 
 Future<void> requestLocationPermission() async {
   final status = await Permission.location.request();
-  if (status.isGranted) {
-    // Permission granted, you can now use location services.
-  } else {
-    // Permission denied.
-    if (status.isDenied) {
-      // The user denied the permission once, you can explain why you need it and request again.
-    } else if (status.isPermanentlyDenied) {
-      // The user permanently denied the permission. You can open app settings to allow the user to enable it manually.
-      openAppSettings();
-    }
+  if (status.isPermanentlyDenied) {
+    // Open app settings only if the permission is permanently denied.
+    openAppSettings();
   }
 }
+
 
 
 void launchMap(String address) async {
-  final url = Uri.encodeFull('https://www.google.com/maps/search/?api=1&query=$address');
-  if (await canLaunch(url)) {
-    await launch(url);
+  String googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$address";
+  String appleMapsUrl = "http://maps.apple.com/?q=$address";
+
+  // Check if it's iOS device to open Apple Maps, else open Google Maps
+  String mapUrl = Platform.isIOS ? appleMapsUrl : googleMapsUrl;
+
+  if (await canLaunch(mapUrl)) {
+    await launch(mapUrl);
   } else {
-    throw 'Could not launch $url';
+    throw 'Could not launch $mapUrl';
   }
 }
+
