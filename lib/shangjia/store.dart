@@ -78,6 +78,21 @@ class _StorePageState extends State<StorePage> {
   void initState() {
     super.initState();
     fetchRestaurants();
+    requestLocationPermission(); // Request permissions on init
+  }
+
+  Future<void> requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.deniedForever) {
+      openAppSettings();
+    } else if (permission == LocationPermission.denied) {
+      // Handle the case when the user denies permission.
+      // Optionally, you can show a dialog or snackbar to inform the user.
+    } else {
+      // Permission is granted
+      // You can fetch the current location or leave it until it's needed for distance calculation
+      getCurrentLocation();
+    }
   }
 
   Future<void> fetchRestaurants() async {
@@ -173,10 +188,10 @@ class _StorePageState extends State<StorePage> {
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterDialog, // Call the filter dialog function
+            onPressed: _showFilterDialog,
           ),
           IconButton(
-            icon: Icon(isListView ? Icons.grid_view : Icons.list), // Change the icon based on the view type
+            icon: Icon(isListView ? Icons.grid_view : Icons.list),
             onPressed: () {
               setState(() {
                 isListView = !isListView; // Toggle the view type
@@ -197,6 +212,7 @@ class _StorePageState extends State<StorePage> {
       ),
     );
   }
+
   Widget buildListView() {
     return ListView.builder(
       itemCount: restaurants.length,
@@ -210,15 +226,54 @@ class _StorePageState extends State<StorePage> {
 
             if (snapshot.connectionState == ConnectionState.waiting) {
               content = ListTile(
-                title: Text('Calculating distance...'),
+                title: Text(restaurant.title),
+                subtitle: Text('Calculating distance...'),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(4.0),
+                  child: Image.network(
+                    restaurant.img,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               );
             } else if (snapshot.hasError) {
+              String errorMessage = 'Error: Could not calculate distance';
+              if (snapshot.error is LocationServiceDisabledException) {
+                errorMessage = 'Location services are disabled.';
+              } else if (snapshot.error is PermissionDeniedException) {
+                errorMessage = 'Location permission is denied.';
+              }
+
               content = ListTile(
-                title: Text('Error: ${snapshot.error}'),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(4.0),
+                  child: Image.network(
+                    restaurant.img,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                title: Text(restaurant.title),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(restaurant.tags ?? 'No tags provided'),
+                    SizedBox(height: 5),
+                    Text(
+                      errorMessage,
+                      style: TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () => openDetailPage(restaurant),
               );
             } else {
               String distance = snapshot.data != null ? '${snapshot.data!.toStringAsFixed(2)} km' : 'Distance not available';
-
               content = ListTile(
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(4.0),
@@ -235,22 +290,13 @@ class _StorePageState extends State<StorePage> {
                   children: [
                     Text(
                       restaurant.tags ?? 'No tags provided',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                      ),
                     ),
                     SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, size: 16, color: Colors.grey),
-                        SizedBox(width: 5),
-                        Text(
-                          distance,
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      distance,
+                      style: TextStyle(
+                        color: Colors.grey,
+                      ),
                     ),
                   ],
                 ),
@@ -267,7 +313,6 @@ class _StorePageState extends State<StorePage> {
       },
     );
   }
-
 
 
   Widget buildGridView() {
@@ -317,8 +362,6 @@ class _StorePageState extends State<StorePage> {
       },
     );
   }
-
-
 
 
   void openDetailPage(Restaurant restaurant) {
@@ -450,54 +493,60 @@ Future<Position> getCurrentLocation() async {
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // Permissions are denied, throw an error or handle it by showing a message to the user.
+      return Future.error('Location permission denied by user.');
+    }
   }
 
-  if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
-    // Return an error or an invalid position, or handle this scenario appropriately.
-    return Future.error('Location permission not granted');
+  if (permission == LocationPermission.deniedForever) {
+    // Permissions are denied forever, take the user to the app settings.
+    openAppSettings();
+    return Future.error('Location permissions are permanently denied, we cannot request permissions.');
   }
 
+  // At this point, permissions are granted, so we can fetch the current location.
   return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 }
+
+class LocationServiceDisabledException implements Exception {}
+
+class PermissionDeniedException implements Exception {}
 
 Future<double> _calculateDistance(Restaurant restaurant) async {
   bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
   if (!isLocationServiceEnabled) {
-    // Instead of returning an error, handle this scenario in a way that doesn't disrupt the user experience.
-    // For example, you could return a default high value to indicate that the distance can't be calculated.
-    return double.maxFinite;
+    throw LocationServiceDisabledException();
   }
 
-  try {
-    Position currentPosition = await getCurrentLocation();
-    double distanceInMeters = Geolocator.distanceBetween(
-      currentPosition.latitude,
-      currentPosition.longitude,
-      restaurant.latitude ?? 0,
-      restaurant.longitude ?? 0,
-    );
-    return distanceInMeters / 1000;
-  } catch (e) {
-    // Handle the exception in a way that doesn't disrupt the user experience.
-    return double.maxFinite;
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    throw PermissionDeniedException();
   }
+
+
+  Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  double distanceInMeters = Geolocator.distanceBetween(
+    currentPosition.latitude,
+    currentPosition.longitude,
+    restaurant.latitude ?? 0,
+    restaurant.longitude ?? 0,
+  );
+  return distanceInMeters / 1000; // Convert to kilometers.
 }
+
 
 Future<void> requestLocationPermission() async {
-  final status = await Permission.location.request();
-  if (status.isPermanentlyDenied) {
-    // Open app settings only if the permission is permanently denied.
+  LocationPermission permission = await Geolocator.requestPermission();
+  if (permission == LocationPermission.deniedForever) {
     openAppSettings();
+  } else if (permission == LocationPermission.denied) {
   }
 }
-
-
 
 void launchMap(String address) async {
   String googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$address";
   String appleMapsUrl = "http://maps.apple.com/?q=$address";
-
-  // Check if it's iOS device to open Apple Maps, else open Google Maps
   String mapUrl = Platform.isIOS ? appleMapsUrl : googleMapsUrl;
 
   if (await canLaunch(mapUrl)) {
