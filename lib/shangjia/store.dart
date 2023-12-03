@@ -419,7 +419,7 @@ class DetailPage extends StatelessWidget {
                     children: [
                       Icon(Icons.phone, color: Colors.blue), // Phone icon
                       SizedBox(width: 10),
-                      Text(
+                      SelectableText(
                         restaurant.phone ?? 'No phone provided',
                         style: TextStyle(
                           color: Colors.blue,
@@ -435,7 +435,7 @@ class DetailPage extends StatelessWidget {
                       Icon(Icons.local_offer, color: Colors.purple), // Discount icon
                       SizedBox(width: 10),
                       Expanded(
-                        child: Text(
+                        child: SelectableText(
                           restaurant.discount ?? 'No discount provided',
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
@@ -450,7 +450,7 @@ class DetailPage extends StatelessWidget {
                       Icon(Icons.wechat, color: Colors.green), // WeChat icon
                       SizedBox(width: 10),
                       Expanded(
-                        child: Text(
+                        child: SelectableText(
                           restaurant.wechat ?? 'No WeChat provided',
                           style: TextStyle(
                             color: Colors.blue,
@@ -473,7 +473,7 @@ class DetailPage extends StatelessWidget {
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () => launchMap(restaurant.address),
-                    child: Text('Open in Maps'),
+                    child: SelectableText('Open in Maps'),
                     style: ElevatedButton.styleFrom(
                       primary: Color.fromRGBO(29, 32, 136, 1.0), // Button color
                       onPrimary: Colors.white, // Text color
