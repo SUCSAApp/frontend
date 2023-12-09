@@ -23,14 +23,20 @@ class Organization {
 class _HomeStaticPage1State extends State<HomeStaticPage1> {
   final List<Organization> organizations = [
     Organization(
-      name: 'Organization 1',
-      logoUrl: 'https://example.com/logo1.png',
+      name: '新南华辩社',
+      logoUrl: '.../app/school9.png',
       description: 'Description of Organization 1.',
       link: 'https://example.com/organization1',
     ),
     Organization(
-      name: 'Organization 2',
-      logoUrl: 'https://example.com/logo2.png',
+      name: '中国心理学生协会',
+      logoUrl: '.../app/school10.png',
+      description: 'Description of Organization 2.',
+      link: 'https://example.com/organization2',
+    ),
+    Organization(
+      name: 'ACYA',
+      logoUrl: '.../app/school11.png',
       description: 'Description of Organization 2.',
       link: 'https://example.com/organization2',
     ),
