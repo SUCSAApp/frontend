@@ -1,109 +1,84 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
-class IconDataModel {
-  final IconData iconData;
-  final String description;
-
-  IconDataModel({required this.iconData, required this.description});
-}
-
-class HomeStaticPage2 extends StatefulWidget {
+class MyApp extends StatelessWidget {
   @override
-  _HomeStaticPage2State createState() => _HomeStaticPage2State();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: MyHomePage(),
+    );
+  }
 }
 
-class _HomeStaticPage2State extends State<HomeStaticPage2> {
-  int selectedCategoryIndex = 0;
+class MyHomePage extends StatefulWidget {
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
 
-  final List<List<IconDataModel>> categories = [
-    [
-      IconDataModel(iconData: Icons.restaurant, description: 'Food'),
-      IconDataModel(iconData: Icons.shopping_cart, description: 'Shopping'),
-      IconDataModel(iconData: Icons.local_parking, description: 'Parking'),
-    ],
-    [
-      IconDataModel(iconData: Icons.movie, description: 'Movies'),
-      IconDataModel(iconData: Icons.music_note, description: 'Music'),
-      IconDataModel(iconData: Icons.sports, description: 'Sports'),
-    ],
-    [
-      IconDataModel(iconData: Icons.book, description: 'Books'),
-      IconDataModel(iconData: Icons.brush, description: 'Art'),
-      IconDataModel(iconData: Icons.computer, description: 'Technology'),
-    ],
-  ];
+class _MyHomePageState extends State<MyHomePage> {
+  // Change these folder paths to your actual folder paths
+  final List<String> folderPaths = ['.../app/合作学联', '.../app/NGo', '.../app/社团'];
+  int selectedFolderIndex = 0;
+
+  List<String> getImagePaths(String folderPath) {
+    Directory directory = Directory(folderPath);
+    List<FileSystemEntity> files = directory.listSync();
+    List<String> imagePaths = [];
+
+    for (var file in files) {
+      if (file.path.endsWith('.png')) {
+        imagePaths.add(file.path);
+      }
+    }
+
+    return imagePaths;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Icon Categories'),
+        title: Text('Logo Viewer'),
       ),
       body: Column(
         children: [
-          _buildCategoryButtons(),
-          Expanded(
-            child: _buildIconGrid(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: List.generate(
-        categories.length,
-            (index) => ElevatedButton(
-          onPressed: () {
-            setState(() {
-              selectedCategoryIndex = index;
-            });
-          },
-          style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                return selectedCategoryIndex == index
-                    ? Colors.blue
-                    : Colors.grey;
-              },
+          // Tabs
+          Row(
+            children: List.generate(
+              folderPaths.length,
+                  (index) => Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      selectedFolderIndex = index;
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: index == selectedFolderIndex
+                        ? Colors.blue
+                        : Colors.grey,
+                  ),
+                  child: Text('Folder ${index + 1}'),
+                ),
+              ),
             ),
           ),
-          child: Text('Category ${index + 1}'),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconGrid() {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8.0,
-        mainAxisSpacing: 8.0,
-      ),
-      itemCount: categories[selectedCategoryIndex].length,
-      itemBuilder: (context, index) {
-        IconDataModel iconDataModel = categories[selectedCategoryIndex][index];
-        return _buildIconCard(iconDataModel);
-      },
-    );
-  }
-
-  Widget _buildIconCard(IconDataModel iconDataModel) {
-    return Card(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            iconDataModel.iconData,
-            size: 48.0,
-          ),
-          SizedBox(height: 8.0),
-          Text(
-            iconDataModel.description,
-            textAlign: TextAlign.center,
+          // Image Grid
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, // You can adjust the number of columns
+              ),
+              itemCount: getImagePaths(folderPaths[selectedFolderIndex]).length,
+              itemBuilder: (context, index) {
+                String imagePath =
+                getImagePaths(folderPaths[selectedFolderIndex])[index];
+                return Image.file(
+                  File(imagePath),
+                  fit: BoxFit.cover,
+                );
+              },
+            ),
           ),
         ],
       ),
