@@ -1,10 +1,39 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({Key? key}) : super(key: key);
   @override
   _ActivityPageState createState() => _ActivityPageState();
+}
+
+class Activity{
+  final DateTime date;
+  final String link;
+  final String title;
+  final String img;
+  final int id;
+
+  const Activity({
+    required this.date,
+    required this.id,
+    required this.title,
+    required this.img,
+    required this.link
+  });
+
+  factory Activity.fromJson(Map<String, dynamic> json) {
+    return Activity(
+      date: json['date'] as DateTime,
+      id: json['id'] as int,
+      title: json['title'] as String,
+      img: json['img'] as String,
+      link: json['link'] as String,
+    );
+  }
+
 }
 
 class _ActivityPageState extends State<ActivityPage> {
@@ -146,6 +175,32 @@ class _ActivityPageState extends State<ActivityPage> {
     });
   }
 
+  //Post Activity
+  Future<Activity> createActivity(String title, DateTime date, int id, String img, String link) async {
+    final response = await http.post(
+      Uri.parse('https://sucsa.org:8004/api/public/events'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'title': title,
+        'date': date.toString(),
+        'id': id.toString(),
+        'img': img,
+        'link': link,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      return Activity.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception('Failed to create activity.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
