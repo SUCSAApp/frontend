@@ -1,80 +1,116 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class ImageDataModel {
-  final String imageUrl;
+class SocialMediaModel {
+  final String appIconUrl;
   final String description;
+  final String deepLinkUrl; // This is the URI scheme or deep link URL
 
-  ImageDataModel({required this.imageUrl, required this.description});
+  SocialMediaModel({
+    required this.appIconUrl,
+    required this.description,
+    required this.deepLinkUrl,
+  });
 }
 
 class HomeStaticPage3 extends StatelessWidget {
-  final List<ImageDataModel> images = [
-    ImageDataModel(
-      imageUrl: 'https://example.com/image1.png',
-      description: 'Description for Image 1',
+  final List<SocialMediaModel> socialMediaApps = [
+    SocialMediaModel(
+      appIconUrl: 'lib/assets/media/xhs.png', // Local asset for the app icon
+      description: '学联官方小红书 -- 学联在小红书平台官方账号发布最新活动信息，各专业学科导师分享，及学生手册内容更新。同时持续为同学们在线答疑解惑。',
+      deepLinkUrl: 'https://www.xiaohongshu.com/user/profile/5ebe58a8000000000101d766', // Replace with actual profile URI scheme
     ),
-    ImageDataModel(
-      imageUrl: 'https://example.com/image2.png',
-      description: 'Description for Image 2',
+    SocialMediaModel(
+      appIconUrl: 'lib/assets/media/xhs.png', // Local asset for the app icon
+      description: '学联舞团小红书 -- 悉尼大学中国学联舞团Dozer Space在小红书发布舞团成员表演和团队作品视频。',
+      deepLinkUrl: 'https://www.xiaohongshu.com/user/profile/60164e890000000001002541', // Replace with actual profile URI scheme
     ),
-    ImageDataModel(
-      imageUrl: 'https://example.com/image3.png',
-      description: 'Description for Image 3',
+    SocialMediaModel(
+        appIconUrl: 'lib/assets/media/bili.png',
+        description: '悉尼大学中国学联在bilibili平台发布舞团、乐团作品展示、活动直播和活动花絮视频等媒体内容，展现留学生活的多彩魅力。',
+        deepLinkUrl: 'https://space.bilibili.com/515192990?spm_id_from=333.337.0.0)'
     ),
-    // Add more images as needed
+    SocialMediaModel(
+        appIconUrl: 'lib/assets/media/ins.jpeg',
+        description: '学联官方Instagram账号功能为更新学联活动双语讯息，让更多元化的学生认识，关注，并加入学联。同时，此账号也提供学联与澳洲本地和国际合作机会。',
+        deepLinkUrl: 'https://www.instagram.com/usydsucsa/'
+    ),
+    SocialMediaModel(
+        appIconUrl: 'lib/assets/media/tk.png',
+        description: '学联官方抖音账号通过短视频形式展现学联多样风采。这里有轻松有趣的小剧场，多才多艺的文艺show，和学联活动回顾。期待你的持续关注！',
+        deepLinkUrl: 'https://www.douyin.com/user/MS4wLjABAAAAX79uCGx4_uDYZew5cRHws9K8F5YoZCRyYJepMs6irAE'
+    ),
+
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Image Boxes'),
+        title: Text('学联媒体平台', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
       ),
       body: ListView.builder(
-        itemCount: images.length,
+        itemCount: socialMediaApps.length,
         itemBuilder: (context, index) {
-          return _buildImageBox(images[index]);
+          return _buildSocialMediaBox(context, socialMediaApps[index]);
         },
       ),
     );
   }
 
-  Widget _buildImageBox(ImageDataModel imageDataModel) {
+  Widget _buildSocialMediaBox(BuildContext context, SocialMediaModel socialMediaModel) {
     return Card(
-      margin: EdgeInsets.all(16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: EdgeInsets.only(left: 8.0, top: 8.0, bottom: 8.0),
-            child: Text(
-              'Title ${images.indexOf(imageDataModel) + 1}',
-              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+      margin: EdgeInsets.all(10.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Image.asset(
+                  socialMediaModel.appIconUrl,
+                  width: 100.0,
+                  height: 100.0,
+                  fit: BoxFit.cover,
+                ),
+                SizedBox(width: 16.0), // Spacing between the image and the text
+                Expanded(
+                  child: Text(
+                    socialMediaModel.description,
+                    style: TextStyle(fontSize: 16.0),
+                  ),
+                ),
+              ],
             ),
-          ),
-          Container(
-            width: 100.0, // Adjust the width as needed
-            height: 100.0, // Adjust the height as needed
-            margin: EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(imageDataModel.imageUrl),
-                fit: BoxFit.cover,
+            Align(
+              alignment: Alignment.bottomRight,
+              child: TextButton(
+                onPressed: () => _launchURL(socialMediaModel.deepLinkUrl),
+                child: Text(
+                  '访问主页', // Text for the button
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromRGBO(29, 32, 136, 1.0), // Text color for the button
+                  ),
+                ),
               ),
-              borderRadius: BorderRadius.circular(8.0),
             ),
-          ),
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                imageDataModel.description,
-                style: TextStyle(fontSize: 16.0),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+
+
+  void _launchURL(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 }

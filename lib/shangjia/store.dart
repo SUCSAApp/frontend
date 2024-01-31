@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
 
 
-// Restaurant model class
+
 class Restaurant {
   final int id;
   final String date;
@@ -71,6 +71,7 @@ class StorePage extends StatefulWidget {
 
 class _StorePageState extends State<StorePage> {
   List<Restaurant> restaurants = [];
+  List<Restaurant> allRestaurants = []; // Added to keep a copy of the original list
   bool isLoading = true;
   bool isListView = false;
 
@@ -78,22 +79,31 @@ class _StorePageState extends State<StorePage> {
   void initState() {
     super.initState();
     fetchRestaurants();
-    requestLocationPermission(); // Request permissions on init
+    requestLocationPermission();
   }
 
+  bool isRequestingLocationPermission = false;
+
   Future<void> requestLocationPermission() async {
-    LocationPermission permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.deniedForever) {
-      openAppSettings();
-    } else if (permission == LocationPermission.denied) {
-      // Handle the case when the user denies permission.
-      // Optionally, you can show a dialog or snackbar to inform the user.
-    } else {
-      // Permission is granted
-      // You can fetch the current location or leave it until it's needed for distance calculation
-      getCurrentLocation();
+    if (isRequestingLocationPermission) {
+      return;
+    }
+
+    isRequestingLocationPermission = true;
+
+    try {
+      LocationPermission permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever) {
+        openAppSettings();
+      } else if (permission == LocationPermission.denied) {
+      } else {
+        getCurrentLocation();
+      }
+    } finally {
+      isRequestingLocationPermission = false;
     }
   }
+
 
   Future<void> fetchRestaurants() async {
     try {
@@ -106,17 +116,19 @@ class _StorePageState extends State<StorePage> {
       if (response.statusCode == 200) {
         String decodedBody = utf8.decode(response.bodyBytes);
         List<dynamic> data = json.decode(decodedBody)['data'];
-        // List<dynamic> data = json.decode(response.body)['data'];
-        setState(() {
-          restaurants = data.map((item) => Restaurant.fromJson(item)).toList();
 
+        setState(() {
+          allRestaurants = restaurants;
           isLoading = false;
         });
       } else {
         throw Exception('Failed to load restaurants');
       }
     } catch (e) {
-      print(e);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading restaurants: $e')),
+      );
       setState(() {
         isLoading = false;
       });
@@ -126,7 +138,7 @@ class _StorePageState extends State<StorePage> {
   String? selectedTag;
 
   void _showFilterDialog() async {
-    // Generate a list of tags from the restaurants. You might want to do this once and keep it in the state if it doesn't change often.
+
     final tags = restaurants.expand((restaurant) => restaurant.tags?.split(',') ?? []).toSet().toList();
 
     final selected = await showDialog<String>(
@@ -147,9 +159,8 @@ class _StorePageState extends State<StorePage> {
     if (selected != null) {
       setState(() {
         selectedTag = selected;
-        // Filter the restaurants list
+
         restaurants = restaurants.where((restaurant) {
-          // If there are no tags or the selectedTag is null, include the restaurant in the list.
           if (restaurant.tags == null || selectedTag == null) {
             return true;
           }
@@ -163,7 +174,7 @@ class _StorePageState extends State<StorePage> {
   void clearFilter() {
     setState(() {
       selectedTag = null;
-      fetchRestaurants(); // This assumes fetchRestaurants() will reset the restaurants list to unfiltered data.
+      restaurants = List.from(allRestaurants);
     });
   }
 
@@ -177,7 +188,7 @@ class _StorePageState extends State<StorePage> {
         ),
       );
     } else {
-      return Container(); // Return an empty container when there's no filter selected.
+      return Container();
     }
   }
 
@@ -318,18 +329,18 @@ class _StorePageState extends State<StorePage> {
   Widget buildGridView() {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // Number of columns
-        childAspectRatio: 1.0, // Aspect ratio of each grid cell
+        crossAxisCount: 2,
+        childAspectRatio: 1.0,
       ),
-      itemCount: restaurants.length, // Total number of items
+      itemCount: restaurants.length,
       itemBuilder: (context, index) {
-        final restaurant = restaurants[index]; // Current restaurant item
+        final restaurant = restaurants[index];
 
         return Card(
-          elevation: 4.0, // Shadow effect under the card
-          margin: EdgeInsets.all(8.0), // Margin around each card
+          elevation: 4.0,
+          margin: EdgeInsets.all(8.0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0), // Rounded corners
+            borderRadius: BorderRadius.circular(10.0),
           ),
           child: InkWell(
             onTap: () => Navigator.push(
@@ -339,12 +350,12 @@ class _StorePageState extends State<StorePage> {
               ),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch the column to fill the card
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)), // Rounded corners at the top
-                    child: Image.network(restaurant.img, fit: BoxFit.cover), // Restaurant image
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
+                    child: Image.network(restaurant.img, fit: BoxFit.cover),
                   ),
                 ),
                 ListTile(
@@ -365,7 +376,6 @@ class _StorePageState extends State<StorePage> {
 
 
   void openDetailPage(Restaurant restaurant) {
-    // Navigate to the detail page
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => DetailPage(restaurant: restaurant),
@@ -536,13 +546,6 @@ Future<double> _calculateDistance(Restaurant restaurant) async {
 }
 
 
-Future<void> requestLocationPermission() async {
-  LocationPermission permission = await Geolocator.requestPermission();
-  if (permission == LocationPermission.deniedForever) {
-    openAppSettings();
-  } else if (permission == LocationPermission.denied) {
-  }
-}
 
 void launchMap(String address) async {
   String googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$address";

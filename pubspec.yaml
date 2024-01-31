@@ -42,6 +42,7 @@ dependencies:
   permission_handler: ^11.1.0
   permission_handler_apple: ^9.2.0
   permission_handler_android: ^12.0.1
+  firebase_messaging: ^11.2.0
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +81,10 @@ flutter:
     - lib/assets/查看详情.png
     - lib/assets/alumni_map.png
     - lib/assets/学联媒体平台.png
+    - lib/assets/官方合作/
+    - lib/assets/media/
+    - lib/assets/app/
+    - lib/assets/data/alumni_info.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

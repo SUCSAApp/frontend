@@ -2,12 +2,18 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sucsa_app/Alumini/alumimi.dart';
+import 'package:sucsa_app/Alumini/alumni.dart';
 import '../activity/activity_page.dart';
 import '../shangjia/store.dart';
 import '../Mysucsa/my_sucsa_page.dart';
 // Assuming the NavBar is in the same directory
 import 'package:sucsa_app/Components/navbar.dart';
+
+import 'package:sucsa_app/Staticpg1/home_static_pg.dart';
+import 'package:sucsa_app/Staticpg2/home_static_pg2.dart';
+import 'package:sucsa_app/Staticpg3/home_static_pg3.dart';
+
+
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -18,7 +24,7 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }
-// sdfs
+
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
@@ -30,7 +36,7 @@ class _HomePageState extends State<HomePage> {
     const MySUCSAPage(),
   ];
 
-  Widget topBanner(){  //悉尼大学中国学联海报
+  Widget topBanner(){
     return Padding(
           padding: const EdgeInsets.only(top: 10.0),
           child: Stack(
@@ -61,16 +67,58 @@ class _HomePageState extends State<HomePage> {
         );
   }
 
-  Widget threeButtons(){  //官方组织，第三方合作，学联媒体平台
+  Widget threeButtons(){
     return Padding(
-          padding: const EdgeInsets.only(top: 5.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              IconButton(onPressed: () {}, icon: Image.asset('lib/assets/官方组织.png', height: 80,)),
-              IconButton(onPressed: () {}, icon: Image.asset('lib/assets/第三方合作.png', height: 80,)),
-              IconButton(onPressed: () {}, icon: Image.asset('lib/assets/学联媒体平台.png', height: 80,))]),
-        );
+      padding: const EdgeInsets.only(top: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          buttonWithBackground(Icon(Icons.language), '合作官方组织', () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => HomeStaticPage1()));
+          }),
+          buttonWithBackground(Icon(Icons.group), '第三方合作', () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => MyHomePage()));
+          }),
+          buttonWithBackground(Icon(Icons.tv), '学联媒体平台', () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => HomeStaticPage3()));
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget buttonWithBackground(Icon icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.grey[0],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              icon.icon,
+              size: 50,
+              color: Color.fromRGBO(29,32,136,1.0),
+            ),
+            Container(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget textTitle(){  //最新动态
@@ -131,7 +179,7 @@ class _HomePageState extends State<HomePage> {
                     right: 5,
                     child: IconButton(onPressed: () {}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
                     )
-                  
+
                 ],
               ),
             )
@@ -188,7 +236,7 @@ class _HomePageState extends State<HomePage> {
                     right: 5,
                     child: IconButton(onPressed: () {}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
                     )
-                  
+
                 ],
               ),
             ),
@@ -207,7 +255,7 @@ class _HomePageState extends State<HomePage> {
     final res = await http.post(Uri.parse(url), body: 'Test');
 
     Map<String, dynamic> message = json.decode(utf8.decode(res.bodyBytes));
-    
+
     List<dynamic> data = message['data'];
 
     List<List<String>> bottomList = [];  //存储所有推文
@@ -273,9 +321,9 @@ class _HomePageState extends State<HomePage> {
                             return bottomView1(myList[index][0], myList[index][1], myList[index][2]);
                           }else{
                             return bottomView2(myList[index][0], myList[index][1], myList[index][2]);
-                          }     
+                          }
                           },
-                        );       
+                        );
                     }
                     return Container();  //无数据，返回空
                   },

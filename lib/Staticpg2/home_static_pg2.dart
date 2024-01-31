@@ -17,7 +17,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // Change these folder paths to your actual folder paths
-  final List<String> folderPaths = ['.../app/合作学联', '.../app/NGo', '.../app/社团'];
+  final List<String> folderPaths = ['lib/assets/app/合作学联', 'lib/assets/app/NGo', 'lib/assets/app/社团'];
   int selectedFolderIndex = 0;
 
   List<String> getImagePaths(String folderPath) {
