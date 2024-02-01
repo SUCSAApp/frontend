@@ -86,23 +86,28 @@ class _StorePageState extends State<StorePage> {
 
   Future<void> requestLocationPermission() async {
     if (isRequestingLocationPermission) {
-      return;
+      return; // If a request is already in progress, do not proceed.
     }
 
-    isRequestingLocationPermission = true;
+    isRequestingLocationPermission = true; // Set the flag to indicate that a request is in progress.
 
     try {
       LocationPermission permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.deniedForever) {
-        openAppSettings();
+        await openAppSettings();
       } else if (permission == LocationPermission.denied) {
+        // Handle the case where the user denies the permission.
       } else {
-        getCurrentLocation();
+        // Permission granted, we can now call the method to get the current location.
+        await getCurrentLocation();
       }
+    } on Exception catch (e) {
+      // Handle any exceptions here.
     } finally {
-      isRequestingLocationPermission = false;
+      isRequestingLocationPermission = false; // Reset the flag when done.
     }
   }
+
 
 
   Future<void> fetchRestaurants() async {
@@ -116,9 +121,11 @@ class _StorePageState extends State<StorePage> {
       if (response.statusCode == 200) {
         String decodedBody = utf8.decode(response.bodyBytes);
         List<dynamic> data = json.decode(decodedBody)['data'];
+        List<Restaurant> fetchedRestaurants = data.map((json) => Restaurant.fromJson(json)).toList();
 
         setState(() {
-          allRestaurants = restaurants;
+          allRestaurants = fetchedRestaurants; // Update the allRestaurants list with fetched data.
+          restaurants = fetchedRestaurants; // Update the restaurants list with fetched data.
           isLoading = false;
         });
       } else {

@@ -3,9 +3,14 @@ import 'Homepage/home_page.dart';
 // import 'package:sucsa_app/Login.dart';
 import 'api_service.dart';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 void main() {
   runApp(const MyApp());
 }
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Color myColor = const Color.fromRGBO(29,32,136,1.0);
 
@@ -15,13 +20,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'SUCSA',
       theme: ThemeData(
         colorScheme: ColorScheme.light(primary: Colors.white),
         useMaterial3: true,
       ),
 
-      home: HomePage(),
+      home: LoginPage(),
     );
   }
 }
@@ -61,7 +67,7 @@ class LoginPage extends StatelessWidget {
                 SizedBox(height: 20), // Spacing between input fields and the button
                 ElevatedButton(
                   onPressed: () {
-                    isStaffLogin ? _handleStaffLogin(context) : _handleStudentLogin(context);
+                    isStaffLogin ? _handleStaffLogin() : _handleStudentLogin();
                     Navigator.of(context).pop(); // Close the dialog after button press
                   },
                   child: Text('Confirm'),
@@ -88,51 +94,62 @@ class LoginPage extends StatelessWidget {
 
 
 
-  void _handleStaffLogin(BuildContext context) async {
+  void _handleStaffLogin() async {
     try {
       final result = await _apiService.staffLogin(
         _staffUsernameController.text,
         _staffPasswordController.text,
       );
-      if (result['token'] != null) {
-        Navigator.of(context).pushAndRemoveUntil(
+      if (result['result'] != null && result['result']['token'] != null) {
+        // Extract token, username, and roles
+        String token = result['result']['token'];
+        String username = result['result']['username'];
+        List<dynamic> roles = result['result']['roles'];  // Assuming roles is a list
+
+        // Use the token and other details as needed, e.g., navigate to a different home page based on role
+        navigatorKey.currentState!.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomePage()),
               (Route<dynamic> route) => false,
         );
       } else {
-        // Handle wrong credentials
-        _showErrorDialog(context, 'Invalid staff credentials.');
+        _showErrorDialog('Invalid staff credentials.');
       }
     } catch (e) {
-      // Handle login error
-      _showErrorDialog(context, 'Login failed. Please try again.');
+      _showErrorDialog('Login failed. Please try again.');
     }
   }
 
-  void _handleStudentLogin(BuildContext context) async {
+
+  void _handleStudentLogin() async {
     try {
       final result = await _apiService.studentLogin(
         _studentIdController.text,
         _studentPasswordController.text,
       );
-      if (result['token'] != null) {
-        Navigator.of(context).pushAndRemoveUntil(
+      if (result['status'] == true && result['result'] != null) {
+        // Extract token, username, and user type
+        String token = result['result']['token'];
+        String username = result['result']['username'];
+        String userType = result['result']['user_type'];
+
+        navigatorKey.currentState!.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomePage()),
               (Route<dynamic> route) => false,
         );
       } else {
-        // Handle wrong credentials
-        _showErrorDialog(context, 'Invalid student credentials.');
+        _showErrorDialog('Invalid student credentials.');
       }
     } catch (e) {
-      // Handle login error
-      _showErrorDialog(context, 'Login failed. Please try again.');
+      _showErrorDialog('Login failed. Please try again.');
     }
   }
 
-  void _showErrorDialog(BuildContext context, String message) {
+
+
+
+  void _showErrorDialog(String message) {
     showDialog(
-      context: context,
+      context: navigatorKey.currentContext!, // Use navigatorKey.currentContext here
       builder: (context) {
         return AlertDialog(
           title: Text('Error'),
@@ -149,6 +166,7 @@ class LoginPage extends StatelessWidget {
       },
     );
   }
+
 
 
 
@@ -187,7 +205,7 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 10), // Spacing between buttons
+              SizedBox(height: 10),
               SizedBox(
                 width: buttonWidth,
                 child: ElevatedButton(

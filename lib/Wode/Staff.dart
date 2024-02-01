@@ -126,22 +126,9 @@ class Section extends StatelessWidget {
             );
           }),
         ),
-
       ],
     );
   }
 }
 
-// Define the pages that these sections will navigate to:
-
-
-
-
-
-
-
-
-
-
-// Don't forget to replace 'assets/header_image.png' with the actual path to your header image
 
