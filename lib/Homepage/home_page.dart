@@ -3,9 +3,10 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sucsa_app/Alumini/alumni.dart';
+import 'package:sucsa_app/Wode/Staff.dart';
 import '../activity/activity_page.dart';
 import '../shangjia/store.dart';
-import '../Mysucsa/my_sucsa_page.dart';
+import '../Wode/Staff.dart';
 // Assuming the NavBar is in the same directory
 import 'package:sucsa_app/Components/navbar.dart';
 
@@ -33,7 +34,7 @@ class _HomePageState extends State<HomePage> {
     const ActivityPage(),
     const StorePage(),
     const AlumniPage(),
-    const MySUCSAPage(),
+    StaffPage(),
   ];
 
   Widget topBanner(){
