@@ -1,7 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({Key? key}) : super(key: key);
@@ -9,7 +10,7 @@ class ActivityPage extends StatefulWidget {
   _ActivityPageState createState() => _ActivityPageState();
 }
 
-class Activity{
+class Activity {
   final DateTime date;
   final String link;
   final String title;
@@ -21,132 +22,168 @@ class Activity{
     required this.id,
     required this.title,
     required this.img,
-    required this.link
+    required this.link,
   });
 
   factory Activity.fromJson(Map<String, dynamic> json) {
     return Activity(
-      date: json['date'] as DateTime,
+      date: DateTime.parse(json['date']),
       id: json['id'] as int,
       title: json['title'] as String,
       img: json['img'] as String,
       link: json['link'] as String,
     );
   }
-
 }
 
+class ActivityDetail {
+  final int id;
+  final DateTime date;
+  final String link;
+  final String title;
+  final String description;
+  final String img;
+  final int orderNumber;
+  final String type;
+
+  const ActivityDetail({
+    required this.id,
+    required this.date,
+    required this.link,
+    required this.title,
+    required this.description,
+    required this.img,
+    required this.orderNumber,
+    required this.type,
+  });
+
+  factory ActivityDetail.fromJson(Map<String, dynamic> json) {
+    return ActivityDetail(
+      id: json['id'] as int,
+      date: DateTime.parse(json['date']),
+      link: json['link'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      img: json['img'] as String,
+      orderNumber: json['orderNumber'] as int,
+      type: json['type'] as String,
+    );
+  }
+}
+
+
 class _ActivityPageState extends State<ActivityPage> {
-  int _currentIndex = 0;
-  final List<String> _images = ["lib/assets/图书馆.png", "lib/assets/摆摊.png"];
-  late final PageController _pageController;
+  List<Activity> activities = [];
+  bool isLoading = true;
+  List<ActivityDetail> activityDetails = [];
+  bool isLoadingDetails = true;
 
-  var pastAct = const Text("往期活动",
-    style: TextStyle(
-      fontSize: 20, // Adjust the font size as needed
-      fontWeight: FontWeight.bold, // Adjust the style as needed
-    )
-  );
+  @override
+  void initState() {
+    super.initState();
+    fetchActivities().then((_) {
+      setState(() {
+        isLoading = false;
+      });
+    });
+    fetchActivityDetails().then((_) {
+      setState(() {
+        isLoadingDetails = false;
+      });
+    });
+  }
 
+  Future<void> fetchActivities() async {
+    final response = await http.post(
+      Uri.parse('https://sucsa.org:8004/api/public/events'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final String decodedBody = utf8.decode(response.bodyBytes);
+      final Map<String, dynamic> decoded = json.decode(decodedBody);
+      if (decoded['code'] == 0 && decoded['msg'] == 'success') {
+        List<dynamic> data = decoded['data'];
+        setState(() {
+          activities = data.map((json) => Activity.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        print('API responded with error: ${decoded['msg']}');
+      }
+    } else {
+      print('Failed to load activities with status code: ${response.statusCode}');
+    }
+  }
+
+  Future<void> fetchActivityDetails() async {
+    final response = await http.post(
+      Uri.parse('https://sucsa.org:8004/api/public/activities'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final String decodedBody = utf8.decode(response.bodyBytes);
+      final Map<String, dynamic> decoded = json.decode(decodedBody);
+      if (decoded['code'] == 0 && decoded['msg'] == 'success') {
+        List<dynamic> data = decoded['data'];
+        setState(() {
+          activityDetails = data.map((json) => ActivityDetail.fromJson(json)).toList();
+        });
+      } else {
+        print('API responded with error: ${decoded['msg']}');
+      }
+    } else {
+      print('Failed to load activity details with status code: ${response.statusCode}');
+    }
+  }
 
   void launchURL(String url) async {
     final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) { // 使用新的 canLaunchUrl
-      await launchUrl(uri); // 使用新的 launchUrl
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
     } else {
       throw 'Could not launch $url';
     }
   }
 
-  InkWell activity(String title, String date, String img, String url) {
+  Widget activityWidget(Activity activity) {
     return InkWell(
-      onTap: () {
-      },
+      onTap: () => launchURL(activity.link),
       child: Stack(
         children: <Widget>[
-          // 图片背景
-          Container(
-            width: 400,
-            height: 180,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(img), // 替换为您的图片路径
-                fit: BoxFit.cover,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.grey, // 阴影颜色
-                  blurRadius: 5.0, // 阴影模糊半径
-                  spreadRadius: 2.0, // 阴影扩散半径
-                  offset: Offset(0, 2), // 阴影偏移量
-                ),
-              ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10.0),
+            child: Image.network(
+              activity.img,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
           ),
-
-          // 颜色填充
           Positioned(
-            top: 120, // 调整颜色填充的位置
-            left: 0,
-            right: 0,
             bottom: 0,
-            child: Container(
-              color: Colors.white, // 替换为您想要的颜色
-            ),
-          ),
-
-          // 写上颜色
-          Positioned(
-            top: 135, // 调整文本的位置
             left: 0,
-            right: 260,
-            child: Center(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.black, // 文本颜色
-                  fontSize: 14, // 文本字体大小
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 155, // 调整文本的位置
-            left: 0,
-            right: 260,
-            child: Center(
-              child: Text(
-                date,
-                style: const TextStyle(
-                  color:  Color.fromRGBO(107, 107, 107, 1.0), // 文本颜色
-                  fontSize: 10, // 文本字体大小
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 5, // 调整按钮的位置
-            left: 230,
             right: 0,
-            child: Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 27, 34, 140), // 设置按钮的背景颜色
-                  minimumSize: const Size(100, 30), // 设置按钮的最小宽度和高度
-                  fixedSize: const Size(100, 30), // 设置按钮的确切宽度和高度
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(10.0),
+                  bottomRight: Radius.circular(10.0),
                 ),
-                onPressed: () {
-                  launchURL(url); // 调用打开网页链接的函数
-                  // 在按钮被点击时执行的操作
-                },
-                child: const Text(
-                  '了解更多',
-                  style:
-                  TextStyle(
-                    color: Colors.white, // 文本颜色
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12, // 文本字体大小
-                  ),),
+              ),
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(activity.title, style: TextStyle(color: Colors.white, fontSize: 20)),
+                  Text('${activity.date.toLocal()}', style: TextStyle(color: Colors.white, fontSize: 15)),
+                ],
               ),
             ),
           ),
@@ -155,106 +192,90 @@ class _ActivityPageState extends State<ActivityPage> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: _currentIndex);
-
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 2));
-      if (!mounted) return false;
-      _currentIndex = (_currentIndex + 1) % _images.length;
-
-      _pageController.animateToPage(
-        _currentIndex,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeIn,
-      );
-
-      return true; // return true to repeat, false to stop
-    });
-  }
-
-  //Post Activity
-  Future<Activity> createActivity(String title, DateTime date, int id, String img, String link) async {
-    final response = await http.post(
-      Uri.parse('https://sucsa.org:8004/api/public/events'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'title': title,
-        'date': date.toString(),
-        'id': id.toString(),
-        'img': img,
-        'link': link,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      // If the server did return a 201 CREATED response,
-      // then parse the JSON.
-      return Activity.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
-    } else {
-      // If the server did not return a 201 CREATED response,
-      // then throw an exception.
-      throw Exception('Failed to create activity.');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading || isLoadingDetails) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 200,
-              child: PageView.builder(
-                itemCount: _images.length,
-                controller: _pageController,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30.0),
-                      child: Image.asset(
-                        _images[index],
-                        height: 300,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  );
-                },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20.0),
+            child: CarouselSlider.builder(
+              itemCount: activities.length,
+              itemBuilder: (context, index, realIndex) {
+                return activityWidget(activities[index]);
+              },
+              options: CarouselOptions(
+                autoPlay: true,
+                aspectRatio: 2.0,
+                enlargeCenterPage: true,
+                viewportFraction: 0.9,
+                padEnds: true,
               ),
             ),
-            // Rest of your content goes here
-            Padding(
-              padding: const EdgeInsets.only(left: 20.0, top: 20, bottom: 10), // 调整左侧内边距
-              child: pastAct,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "往期活动",
+                style: TextStyle(
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromRGBO(29,32,136,1.0)
+                ),
+              ),
             ),
+          ),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              itemCount: activityDetails.length,
+              separatorBuilder: (context, index) => SizedBox.shrink(),
+              itemBuilder: (context, index) {
+                final detail = activityDetails[index];
+                return Card(
+                  elevation: 1.0,
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  child: ListTile(
+                    leading: Image.network(detail.img, width: 50, height: 50),
+                    title: Text(detail.title, style: TextStyle(fontSize: 16)),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: SelectableText(detail.title),
+                            content: SingleChildScrollView(
+                              child: SelectableText(detail.description),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text('Close', style: TextStyle(color: Color.fromRGBO(29,32,136,1.0))),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
+                          );
+                        },
+                      );
 
-            Padding(
-              padding: const EdgeInsets.only(bottom: 30), // 调整左侧内边距
-              child:Center(child:activity("此刻音乐节", "2023.02.12", "lib/assets/图书馆.png",
-                  "https://www.figma.com/file/oAunUVThglsFpBKpAd8aJB/SUCSA-APP?type=design&node-id=18-3&mode=design&t=ITi1uqwSrfw3BMlt-0")),
+                    },
+                  ),
+                );
+              },
             ),
-
-            Padding(
-              padding: const EdgeInsets.only(bottom: 30), // 调整左侧内边距
-              child:Center(child:activity("「悉望」新生分享会", "2023.02.12", "lib/assets/摆摊.png",
-                  "https://www.figma.com/file/oAunUVThglsFpBKpAd8aJB/SUCSA-APP?type=design&node-id=18-3&mode=design&t=ITi1uqwSrfw3BMlt-0")),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10), // 调整左侧内边距
-              child:Center(child:activity("「悉望」新生分享会", "2023.02.12", "lib/assets/图书馆.png",
-                  "https://www.figma.com/file/oAunUVThglsFpBKpAd8aJB/SUCSA-APP?type=design&node-id=18-3&mode=design&t=ITi1uqwSrfw3BMlt-0")),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+
 }

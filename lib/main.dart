@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Homepage/home_page.dart';
-// import 'package:sucsa_app/Login.dart';
 import 'api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -9,8 +9,6 @@ import 'package:http/http.dart' as http;
 void main() {
   runApp(const MyApp());
 }
-
-String? myToken;
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -28,19 +26,19 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.light(primary: Colors.white),
         useMaterial3: true,
       ),
-
       home: LoginPage(),
     );
   }
 }
 
-String getToken(){
-    return myToken!;
-  }
-
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   LoginPage({Key? key}) : super(key: key);
 
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _staffUsernameController = TextEditingController();
   final TextEditingController _staffPasswordController = TextEditingController();
@@ -48,57 +46,135 @@ class LoginPage extends StatelessWidget {
   final TextEditingController _studentPasswordController = TextEditingController();
   final ApiService _apiService = ApiService();
 
+  bool _showSplash = true;
+  bool _showLoginButtons = false;
+
+  bool _isRememberMeStaff = false;
+  bool _isRememberMeStudent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCredentials();
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        _showSplash = false;
+      });
+      Future.delayed(Duration(seconds: 1), () {
+        setState(() {
+          _showLoginButtons = true;
+        });
+      });
+    });
+  }
+
+  void _loadCredentials() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    _staffUsernameController.text = prefs.getString('staffUsername') ?? '';
+    _studentIdController.text = prefs.getString('studentId') ?? '';
+  }
+
+  void _saveCredentials(bool isStaffLogin, String token) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+    if (isStaffLogin && _isRememberMeStaff) {
+      prefs.setString('staffUsername', _staffUsernameController.text);
+      print('staffUsername: ${_staffUsernameController.text}');
+    } else if (!isStaffLogin && _isRememberMeStudent) {
+      prefs.setString('studentId', _studentIdController.text);
+    }
+  }
+
   void showLoginDialog(BuildContext context, bool isStaffLogin) {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(isStaffLogin ? 'STAFF Login' : 'Student Login'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                TextFormField(
-                  controller: isStaffLogin ? _staffUsernameController : _studentIdController,
-                  decoration: InputDecoration(
-                    labelText: isStaffLogin ? 'Username' : 'Student ID',
-                  ),
-                ),
-                TextFormField(
-                  controller: isStaffLogin ? _staffPasswordController : _studentPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                  ),
-                  obscureText: true,
-                ),
-                // Add the confirm button here
-                SizedBox(height: 20), // Spacing between input fields and the button
-                ElevatedButton(
-                  onPressed: () {
-                    isStaffLogin ? _handleStaffLogin() : _handleStudentLogin();
-                    Navigator.of(context).pop(); // Close the dialog after button press
+        bool localIsRememberMe = isStaffLogin ? _isRememberMeStaff : _isRememberMeStudent;
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text(isStaffLogin ? 'STAFF Login' : 'Student Login'),
+              content: SingleChildScrollView(
+                child: ListBody(
+                  children: <Widget>[
+                    TextFormField(
+                      controller: isStaffLogin
+                          ? _staffUsernameController
+                          : _studentIdController,
+                      decoration: InputDecoration(
+                        labelText: isStaffLogin ? 'Username' : 'Student ID',
+                        labelStyle: TextStyle(color: Colors.black),
+                        border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black, width: 2.0),
+                        ),
+                        floatingLabelStyle: TextStyle(color: Colors.black),
+                      ),
+                      cursorColor: Colors.blueAccent,
+                      cursorWidth: 2.0,
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: isStaffLogin
+                          ? _staffPasswordController
+                          : _studentPasswordController,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: Colors.black),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black, width: 2.0),
+                        ),
+                      ),
+                      obscureText: true,
+                      cursorColor: Colors.black,
+                      cursorWidth: 2.0,
+                    ),
+                CheckboxListTile(
+                  title: Text('记住账号'),
+                  value: localIsRememberMe,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      localIsRememberMe = value!;
+                      if (isStaffLogin) {
+                        _isRememberMeStaff = value;
+                      } else {
+                        _isRememberMeStudent = value;
+                      }
+                      _saveCredentials(isStaffLogin, '');
+                    });
                   },
-                  child: Text('Confirm'),
-                  style: ElevatedButton.styleFrom(
-                    primary: myColor, // Button background color
-                    onPrimary: Colors.white, // Button text color
-                  ),
+                  checkColor: Colors.white,
+                  activeColor: myColor,
                 ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
+                  SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        isStaffLogin
+                            ? _handleStaffLogin()
+                            : _handleStudentLogin();
+                        Navigator.of(context).pop();
+                      },
+                      child: Text('登录',style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white, backgroundColor: myColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18.0),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 15),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          });
       },
     );
   }
-
 
 
   void _handleStaffLogin() async {
@@ -108,14 +184,15 @@ class LoginPage extends StatelessWidget {
         _staffPasswordController.text,
       );
       if (result['result'] != null && result['result']['token'] != null) {
-        // Extract token, username, and roles
         String token = result['result']['token'];
-        myToken = token;
-
         String username = result['result']['username'];
-        List<dynamic> roles = result['result']['roles'];  // Assuming roles is a list
+        List<dynamic> roles = result['result']['roles'];
+        _saveCredentials(true, token);
 
-        // Use the token and other details as needed, e.g., navigate to a different home page based on role
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+        await prefs.setString('username', username);
+        await prefs.setString('roles', jsonEncode(roles));
         navigatorKey.currentState!.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomePage()),
               (Route<dynamic> route) => false,
@@ -128,7 +205,6 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-
   void _handleStudentLogin() async {
     try {
       final result = await _apiService.studentLogin(
@@ -136,14 +212,11 @@ class LoginPage extends StatelessWidget {
         _studentPasswordController.text,
       );
       if (result['status'] == true && result['result'] != null) {
-        // Extract token, username, and user type
         String token = result['result']['token'];
-        myToken = token;
-
         String username = result['result']['username'];
         String userType = result['result']['user_type'];
 
-
+        _saveCredentials(true, token);
         navigatorKey.currentState!.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomePage()),
               (Route<dynamic> route) => false,
@@ -152,17 +225,13 @@ class LoginPage extends StatelessWidget {
         _showErrorDialog('Invalid student credentials.');
       }
     } catch (e) {
-      print(e.toString());
       _showErrorDialog('Login failed. Please try again.');
     }
   }
 
-
-
-
   void _showErrorDialog(String message) {
     showDialog(
-      context: navigatorKey.currentContext!, // Use navigatorKey.currentContext here
+      context: navigatorKey.currentContext!,
       builder: (context) {
         return AlertDialog(
           title: Text('Error'),
@@ -171,7 +240,7 @@ class LoginPage extends StatelessWidget {
             TextButton(
               child: Text('OK'),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -179,9 +248,6 @@ class LoginPage extends StatelessWidget {
       },
     );
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -193,29 +259,42 @@ class LoginPage extends StatelessWidget {
         alignment: Alignment.center,
         children: <Widget>[
           Image.asset(
-            'lib/assets/login.png',
-            fit: BoxFit.cover,
+            'lib/assets/login.jpg',
+            fit: BoxFit.fill,
             height: double.infinity,
             width: double.infinity,
             alignment: Alignment.center,
           ),
-          Column(
+          AnimatedOpacity(
+            opacity: _showSplash ? 1.0 : 0.0,
+            duration: Duration(seconds: 1),
+            child: Container(
+              alignment: Alignment.center,
+              child: Image.asset('lib/assets/mascot.jpg',
+              fit: BoxFit.fill,)
+            ),
+          ),
+        if (!_showSplash) ...[
+        AnimatedOpacity(
+            opacity: _showLoginButtons ? 1.0 : 0.0,
+            duration: Duration(seconds: 2),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              // Wrap the ElevatedButton with a SizedBox to set a fixed width
               SizedBox(
                 width: buttonWidth,
                 child: ElevatedButton(
                   onPressed: () => showLoginDialog(context, false),
-                  child: Text('普通登录'),
+                  child: Text('普通登录', style: TextStyle(fontWeight: FontWeight.bold),),
                   style: ElevatedButton.styleFrom(
-                    primary: Colors.white,
-                    onPrimary: myColor,
+                    foregroundColor: myColor, backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18.0),
                     ),
+
                     padding: EdgeInsets.symmetric(vertical: 10.0), // Adjust the padding
                   ),
+
                 ),
               ),
               SizedBox(height: 10),
@@ -223,21 +302,20 @@ class LoginPage extends StatelessWidget {
                 width: buttonWidth,
                 child: ElevatedButton(
                   onPressed: () => showLoginDialog(context, true),
-                  child: Text('STAFF登录'),
+                  child: Text('STAFF登录',style: TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    primary: Colors.white,
-                    onPrimary: myColor,
+                    foregroundColor: myColor, backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18.0),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 10.0), // Adjust the padding
+                    padding: EdgeInsets.symmetric(vertical: 10.0),
                   ),
                 ),
-              ),
-            ],
-          ),
+              )],
+            ),
+        ),
         ],
-      ),
+        ]),
     );
   }
 }

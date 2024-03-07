@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:sucsa_app/main.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sucsa_app/Alumini/alumni.dart';
@@ -9,7 +7,6 @@ import 'package:sucsa_app/Wode/Staff.dart';
 import '../activity/activity_page.dart';
 import '../shangjia/store.dart';
 import '../Wode/Staff.dart';
-// Assuming the NavBar is in the same directory
 import 'package:sucsa_app/Components/navbar.dart';
 
 import 'package:sucsa_app/Staticpg1/home_static_pg.dart';
@@ -28,21 +25,6 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class Activity{
-  String title;
-  String img;
-  String link;
-  String date;
-
-  Activity({
-    required this.title,
-    required this.img,
-    required this.link,
-    required this.date,
-  });
-}
-
-
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
@@ -51,7 +33,7 @@ class _HomePageState extends State<HomePage> {
     const ActivityPage(),
     const StorePage(),
     const AlumniPage(),
-    StaffPage(),
+    const StaffPage(),
   ];
 
   Widget topBanner(){
@@ -146,7 +128,7 @@ class _HomePageState extends State<HomePage> {
         );
   }
 
-  Widget bottomView1(String url, String title, String subtitle, String img){ //左图片，右文字
+  Widget bottomView1(String title, String subtitle, String img){ //左图片，右文字
     return Container(
       margin: const EdgeInsets.all(10.0),
       decoration: const BoxDecoration(
@@ -177,7 +159,7 @@ class _HomePageState extends State<HomePage> {
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: ListTile(
-                        title: Text(title, maxLines: 4, overflow: TextOverflow.ellipsis,),
+                        title: Text(title),
                         titleAlignment: ListTileTitleAlignment.top,
                         titleTextStyle: const TextStyle(
                           color: Colors.black,
@@ -195,7 +177,7 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     bottom: 0,
                     right: 5,
-                    child: IconButton(onPressed: () {_launchUrl(Uri.parse(url));}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
+                    child: IconButton(onPressed: () {}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
                     )
 
                 ],
@@ -207,7 +189,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget bottomView2(String url, String title, String subtitle, String img){  //右图片，左文字
+  Widget bottomView2(String title, String subtitle, String img){  //右图片，左文字
     return Container(
       margin: const EdgeInsets.all(10.0),
       decoration: const BoxDecoration(
@@ -234,7 +216,7 @@ class _HomePageState extends State<HomePage> {
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: ListTile(
-                        title: Text(title, maxLines: 4, overflow: TextOverflow.ellipsis,),
+                        title: Text(title),
                         titleAlignment: ListTileTitleAlignment.top,
                         titleTextStyle: const TextStyle(
                           color: Colors.black,
@@ -252,7 +234,7 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     bottom: 0,
                     right: 5,
-                    child: IconButton(onPressed: () {_launchUrl(Uri.parse(url));}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
+                    child: IconButton(onPressed: () {}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
                     )
 
                 ],
@@ -268,36 +250,38 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<List<Activity>> getRequest() async {  //POST REQUEST
-    String url = 'https://sucsa.org:8004/api/public/events';
-    final res = await http.post(Uri.parse(url));
+  Future<List<List<String>>> getRequest() async {  //POST REQUEST
+    String url = 'https://sucsa.org:8004/api/public/activities';
+    final res = await http.post(Uri.parse(url), body: 'Test');
 
     Map<String, dynamic> message = json.decode(utf8.decode(res.bodyBytes));
 
     List<dynamic> data = message['data'];
 
-    List<Activity> events = [];  //存储所有推文
+    List<List<String>> bottomList = [];  //存储所有推文
     data.forEach((element) {
-      String title = element["title"];
-      String img = element["img"];
-      String link = element["link"];
-      String date = element["date"];
-      events.add(Activity(date: date, title: title, img: img, link: link));
+      List<String> ls = [];
+      (element as Map<String, dynamic>).forEach((key, value) {
+        if(key == 'title'){
+          ls.add(value);
+        }
+        else if(key == 'description'){
+          ls.add(value);
+        }
+        else if(key == 'img'){
+          ls.add(value);
+        }
+      });
+      bottomList.add(ls);
     });
 
-    return events;
+    return bottomList;
   }
 
   void _onNavBarItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-  }
-
-  Future<void> _launchUrl(Uri url) async {
-    if(!await launchUrl(url)){
-      throw 'Could not launch $url';
-    }
   }
 
   @override
@@ -323,20 +307,20 @@ class _HomePageState extends State<HomePage> {
                 topBanner(),
                 threeButtons(),
                 textTitle(),
-                FutureBuilder<List<Activity>>(
+                FutureBuilder<List<List<String>>>(
                   future: getRequest(),
                   builder: (context, snapshot) {
                     if(snapshot.hasData){
-                      List<Activity> result = snapshot.data!;
+                      List<List<String>> myList = snapshot.data!;
                       return ListView.builder(
                         physics: const ClampingScrollPhysics(),
                         shrinkWrap: true,
-                        itemCount: result.length,
+                        itemCount: myList.length,
                         itemBuilder: (context, index) {
                           if(index % 2 == 0){
-                            return bottomView1(result[index].link, result[index].title, result[index].date, result[index].img);
+                            return bottomView1(myList[index][0], myList[index][1], myList[index][2]);
                           }else{
-                            return bottomView2(result[index].link, result[index].title, result[index].date, result[index].img);
+                            return bottomView2(myList[index][0], myList[index][1], myList[index][2]);
                           }
                           },
                         );

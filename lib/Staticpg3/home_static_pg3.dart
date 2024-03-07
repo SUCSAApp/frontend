@@ -40,6 +40,11 @@ class HomeStaticPage3 extends StatelessWidget {
         description: '学联官方抖音账号通过短视频形式展现学联多样风采。这里有轻松有趣的小剧场，多才多艺的文艺show，和学联活动回顾。期待你的持续关注！',
         deepLinkUrl: 'https://www.douyin.com/user/MS4wLjABAAAAX79uCGx4_uDYZew5cRHws9K8F5YoZCRyYJepMs6irAE'
     ),
+    SocialMediaModel(
+        appIconUrl: 'lib/assets/media/xmly.png',
+        description: '悉尼大学中国学联小声叨叨电台，由文艺部成员创办、管理和运营，由学联其他职能部门辅助运营。目前电台由播客形式定期在喜马拉雅上平台发布内容。重新定义文艺，传播文艺感受，收获治愈瞬间。',
+        deepLinkUrl: 'https://m.ximalaya.com/zhubo/467946653'
+    ),
 
   ];
 
