@@ -5,18 +5,18 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum RequestStatus { approved, rejected, pending }
+enum RequestStatus { APPROVED, REJECTED, PENDING }
 
 extension RequestStatusExtension on RequestStatus {
   String get value {
     switch (this) {
-      case RequestStatus.approved:
-        return 'approved';
-      case RequestStatus.rejected:
-        return 'rejected';
-      case RequestStatus.pending:
+      case RequestStatus.APPROVED:
+        return 'APPROVED';
+      case RequestStatus.REJECTED:
+        return 'REJECTED';
+      case RequestStatus.PENDING:
       default:
-        return 'pending';
+        return 'PENDING';
     }
   }
 }
@@ -74,7 +74,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
         approvedRequests = Warehouseapproves.where((r) => r['status'] == 'APPROVED').toList();
         pendingRequests = Warehouseapproves.where((r) => r['status'] == 'PENDING').toList();
       });
-      print(Warehouseapproves.last);
     } else {
       print('Failed to load warehouse requests: ${response.body}');
     }
@@ -95,23 +94,28 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
-    final String body = json.encode({
-      'status': status.value,
-    });
 
-    print('Auditing warehouse request with URL: $apiUrl');
-    print('Status: ${status.value}');
+
+    final Map<String, dynamic> requestBody = {
+      'id': requestId,
+      'status': status.value,
+    };
+    final String jsonBody = json.encode(requestBody);
+
+    print('requestBody: $requestBody');
 
     try {
-      final response = await http.post(Uri.parse(apiUrl), headers: headers, body: body);
+      final response = await http.post(Uri.parse(apiUrl), headers: headers, body: jsonBody);
       print('Response status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Request Headers: $headers');
+
+      print('JSON Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         print('Warehouse request audited successfully.');
         setState(() {
           pendingRequests.removeWhere((r) => r['id'] == requestId);
-          if (status != RequestStatus.pending) {
+          if (status != RequestStatus.PENDING) {
             var auditedRequest = returnRequests.firstWhere((r) => r['id'] == requestId);
             auditedRequest['status'] = status.value;
             approvedRequests.add(auditedRequest);
@@ -124,6 +128,7 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       print('An error occurred while auditing warehouse request: $e');
     }
   }
+
 
 
 
@@ -171,7 +176,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
         approvedRequests = returnRequests.where((r) => r['status'] == 'APPROVED').toList();
         pendingRequests = returnRequests.where((r) => r['status'] == 'PENDING').toList();
       });
-      print(returnRequests.last);
     } else {
       print('Failed to load return requests: ${response.body}');
     }
@@ -212,7 +216,7 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
         print('Return request audited successfully.');
         setState(() {
           pendingRequests.removeWhere((r) => r['id'] == requestId);
-          if (status != RequestStatus.pending) {
+          if (status != RequestStatus.PENDING) {
             var auditedRequest = returnRequests.firstWhere((r) => r['id'] == requestId);
             auditedRequest['status'] = status.value;
             approvedRequests.add(auditedRequest);
@@ -356,9 +360,9 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
           icon: Icon(Icons.check, color: Colors.green),
           onPressed: () {
             if (isReturnRequest) {
-              auditReturnRequest(requestId, RequestStatus.approved);
+              auditReturnRequest(requestId, RequestStatus.APPROVED);
             } else {
-              auditWarehouseRequest(requestId, RequestStatus.approved);
+              auditWarehouseRequest(requestId, RequestStatus.APPROVED);
             }
           },
         ),
@@ -366,9 +370,9 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
           icon: Icon(Icons.close, color: Colors.red),
           onPressed: () {
             if (isReturnRequest) {
-              auditReturnRequest(requestId, RequestStatus.rejected);
+              auditReturnRequest(requestId, RequestStatus.REJECTED);
             } else {
-              auditWarehouseRequest(requestId, RequestStatus.rejected);
+              auditWarehouseRequest(requestId, RequestStatus.REJECTED);
             }
           },
         ),
@@ -385,11 +389,11 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
         children: <Widget>[
           IconButton(
             icon: Icon(Icons.check, color: Colors.green),
-            onPressed: () => auditReturnRequest(request['id'], RequestStatus.approved),
+            onPressed: () => auditReturnRequest(request['id'], RequestStatus.APPROVED),
           ),
           IconButton(
             icon: Icon(Icons.close, color: Colors.red),
-            onPressed: () => auditReturnRequest(request['id'], RequestStatus.rejected),
+            onPressed: () => auditReturnRequest(request['id'], RequestStatus.REJECTED),
           ),
         ],
       ),

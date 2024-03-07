@@ -10,8 +10,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   TabController? _tabController;
   final List<List<String>> folderImagePaths = [
     [
-      'lib/assets/cooperator/co1.png',
-      'lib/assets/cooperator/co2.png',
+      'lib/assets/cooperator/co1.jpg',
+      'lib/assets/cooperator/co2.jpg',
       'lib/assets/cooperator/co3.png',
       'lib/assets/cooperator/co4.png',
       'lib/assets/cooperator/co5.png',
