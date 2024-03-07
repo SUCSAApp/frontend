@@ -10,8 +10,6 @@ void main() {
   runApp(const MyApp());
 }
 
-String? myToken;
-
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Color myColor = const Color.fromRGBO(29,32,136,1.0);
@@ -34,13 +32,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-String getToken(){
-    return myToken!;
-  }
-
 class LoginPage extends StatelessWidget {
   LoginPage({Key? key}) : super(key: key);
-
 
   final TextEditingController _staffUsernameController = TextEditingController();
   final TextEditingController _staffPasswordController = TextEditingController();
@@ -110,8 +103,6 @@ class LoginPage extends StatelessWidget {
       if (result['result'] != null && result['result']['token'] != null) {
         // Extract token, username, and roles
         String token = result['result']['token'];
-        myToken = token;
-
         String username = result['result']['username'];
         List<dynamic> roles = result['result']['roles'];  // Assuming roles is a list
 
@@ -138,11 +129,8 @@ class LoginPage extends StatelessWidget {
       if (result['status'] == true && result['result'] != null) {
         // Extract token, username, and user type
         String token = result['result']['token'];
-        myToken = token;
-
         String username = result['result']['username'];
         String userType = result['result']['user_type'];
-
 
         navigatorKey.currentState!.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomePage()),
@@ -152,7 +140,6 @@ class LoginPage extends StatelessWidget {
         _showErrorDialog('Invalid student credentials.');
       }
     } catch (e) {
-      print(e.toString());
       _showErrorDialog('Login failed. Please try again.');
     }
   }
