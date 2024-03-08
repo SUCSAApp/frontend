@@ -116,7 +116,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
     }
   }
 
-
   @override
   void dispose() {
     _eventNameController.dispose();
@@ -133,7 +132,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
       _items.add({'name': '', 'quantity': 0});
     });
   }
-
 
   Future<void> createWarehouseRequest() async {
     final url = Uri.parse('http://cms.sucsa.org:8005/api/warehouse-requests');
@@ -212,12 +210,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
     }
   }
 
-
-
-
-
-
-
   Widget _buildStyledTextFieldWithLabel({
     required String label,
     required String hintText,
@@ -292,7 +284,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
                     }
                     return null;
                   },
-                  // Remove the onTap since we don't want the user to edit this field
                 ),
 
                 _buildStyledTextFieldWithLabel(

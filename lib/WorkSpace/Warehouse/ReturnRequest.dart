@@ -80,7 +80,6 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
     }
   }
 
-
   List<Map<String, dynamic>> apiItems = [];
 
   @override
@@ -154,7 +153,6 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
 
     var body = json.encode(requestBody);
 
-
     try {
       var response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
@@ -170,8 +168,8 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
                 TextButton(
                   child: Text('确定', style: TextStyle(color: Color.fromRGBO(29,32,136,1.0), fontWeight: FontWeight.bold)),
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                    Navigator.of(context).pop(); // Optionally, navigate back or to another page
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
                   },
                 ),
               ],
@@ -187,12 +185,6 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
       print('An error occurred while submitting the return request: $e');
     }
   }
-
-
-
-
-
-
 
   Widget _buildStyledTextFieldWithLabel({
     required String label,
@@ -228,9 +220,6 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
       ],
     );
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
