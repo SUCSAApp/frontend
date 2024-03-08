@@ -197,6 +197,7 @@ class _LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => HomePage()),
               (Route<dynamic> route) => false,
         );
+        print('roles: $roles');
       } else {
         _showErrorDialog('Invalid staff credentials.');
       }
@@ -204,6 +205,7 @@ class _LoginPageState extends State<LoginPage> {
       _showErrorDialog('Login failed. Please try again.');
     }
   }
+
 
   void _handleStudentLogin() async {
     try {

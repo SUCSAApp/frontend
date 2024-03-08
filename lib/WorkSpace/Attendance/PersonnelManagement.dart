@@ -8,8 +8,6 @@ import 'dart:convert';
 import 'package:sucsa_app/WorkSpace/Attendance/UserCreate.dart';
 import 'package:sucsa_app/WorkSpace/Attendance/UserUpdate.dart';
 
-
-
 class PersonnelManagementPage extends StatefulWidget {
   const PersonnelManagementPage({super.key});
 
@@ -72,7 +70,6 @@ class People {
 class PersonnelManagementPageState extends State<PersonnelManagementPage> {
 
   bool runFutureBuilder = true;
-
 
   String? dropdownvalue;
 
@@ -198,7 +195,9 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
                 runFutureBuilder = true;
                 deleteUser();
               });},),
-          )
+          ),
+
+
 
         ],
       ),
@@ -299,7 +298,7 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
     final String? token = prefs.getString('token');
     String url = "http://cms.sucsa.org:8005/api/user/deleteUser";
 
-    bool success = false; // Flag to track if deletion was successful for any user
+    bool success = false;
 
     int i = 0;
     while (i < members.length) {
@@ -346,7 +345,7 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
                 setState(() {
-                  // Trigger a rebuild if needed, e.g., to refresh the list
+                  runFutureBuilder = true;
                 });
               },
             ),
@@ -355,7 +354,6 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
       },
     );
   }
-
 
   Future<void> dialogBuilder(BuildContext context){
     return showDialog<void>(
@@ -378,6 +376,14 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
   }
 
 
+
+
+  Future<String?> _getToken() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+
   Future<List<Department>> getAllDepartments() async{
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
@@ -394,7 +400,6 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
       var department = Department(id: element["id"], name: element["name"]);
       data.add(department);
     });
-
 
     return data;
 

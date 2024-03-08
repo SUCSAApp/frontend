@@ -31,6 +31,8 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
   List<dynamic> pendingRequests = [];
   List<dynamic> Warehouseapproves = [];
   List<dynamic> returnRequests = [];
+  List<dynamic> rejectedRequests = [];
+
 
   bool _showApproved = true;
 
@@ -72,14 +74,13 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       setState(() {
         Warehouseapproves = decodedResponse;
         approvedRequests = Warehouseapproves.where((r) => r['status'] == 'APPROVED').toList();
+        rejectedRequests = Warehouseapproves.where((r) => r['status'] == 'REJECTED').toList();
         pendingRequests = Warehouseapproves.where((r) => r['status'] == 'PENDING').toList();
       });
     } else {
       print('Failed to load warehouse requests: ${response.body}');
     }
   }
-
-
 
   Future<void> auditWarehouseRequest(int requestId, RequestStatus status) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -92,33 +93,29 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
     final String apiUrl = 'http://cms.sucsa.org:8005/api/warehouse-requests/$requestId/audit';
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       'Authorization': 'Bearer $token',
     };
 
-
     final Map<String, dynamic> requestBody = {
-      'id': requestId,
       'status': status.value,
     };
     final String jsonBody = json.encode(requestBody);
 
-    print('requestBody: $requestBody');
 
     try {
       final response = await http.post(Uri.parse(apiUrl), headers: headers, body: jsonBody);
-      print('Response status code: ${response.statusCode}');
-      print('Request Headers: $headers');
 
-      print('JSON Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         print('Warehouse request audited successfully.');
         setState(() {
-          pendingRequests.removeWhere((r) => r['id'] == requestId);
+          pendingRequests.removeWhere((r) => r['requestId'] == requestId);
           if (status != RequestStatus.PENDING) {
-            var auditedRequest = returnRequests.firstWhere((r) => r['id'] == requestId);
+            var auditedRequest = Warehouseapproves.firstWhere((r) => r['requestId'] == requestId);
             auditedRequest['status'] = status.value;
             approvedRequests.add(auditedRequest);
+            rejectedRequests.add(auditedRequest);
           }
         });
       } else {
@@ -128,11 +125,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       print('An error occurred while auditing warehouse request: $e');
     }
   }
-
-
-
-
-
 
   Future<void> fetchAllRequests() async {
     await fetchWarehouseapproves();
@@ -146,7 +138,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       pendingRequests = combinedPendingRequests;
     });
   }
-
 
   Future<void> fetchReturnRequests() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -174,13 +165,13 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       setState(() {
         returnRequests = decodedResponse;
         approvedRequests = returnRequests.where((r) => r['status'] == 'APPROVED').toList();
+        rejectedRequests = returnRequests.where((r) => r['status'] == 'REJECTED').toList();
         pendingRequests = returnRequests.where((r) => r['status'] == 'PENDING').toList();
       });
     } else {
       print('Failed to load return requests: ${response.body}');
     }
   }
-
 
   Future<void> auditReturnRequest(int requestId, RequestStatus status) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -192,9 +183,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
     }
     String apiUrl = 'http://cms.sucsa.org:8005/api/return-requests/$requestId/audit';
 
-    print('Auditing return request with URL: $apiUrl');
-    print('id: $requestId');
-
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -202,15 +190,8 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode({
-          'status': status.value,
-
-        }),
+        body: json.encode({'status': status.value}),
       );
-
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      print('Status: ${status.value}');
 
       if (response.statusCode == 200) {
         print('Return request audited successfully.');
@@ -220,9 +201,9 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
             var auditedRequest = returnRequests.firstWhere((r) => r['id'] == requestId);
             auditedRequest['status'] = status.value;
             approvedRequests.add(auditedRequest);
+            rejectedRequests.add(auditedRequest);
           }
         });
-        await fetchReturnRequests();
       } else {
         print('Failed to audit return request: ${response.body}');
       }
@@ -230,7 +211,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       print('An error occurred while auditing return request: $e');
     }
   }
-
 
 
   @override
@@ -248,14 +228,14 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildPageButton('已审核', true), // Passing true for approved
-              SizedBox(width: 20), // Spacing between buttons
-              _buildPageButton('待审核', false), // Passing false for pending
+              _buildPageButton('已审核', true),
+              SizedBox(width: 20),
+              _buildPageButton('待审核', false),
             ],
           ),
           Expanded(
             child: _showApproved
-                ? buildRequestList(approvedRequests, false)
+                ? buildRequestList([...approvedRequests, ...rejectedRequests], false)
                 : buildRequestList(pendingRequests, true),
           ),
         ],
@@ -316,7 +296,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
             ? DateFormat('yyyy-MM-dd').format(DateTime.parse(request['activityDate']))
             : 'Unknown Date';
 
-        // Retrieve requestId based on the type of request.
         int? requestId = isReturnRequest ? request['id'] : request['requestId'];
 
         return Card(
