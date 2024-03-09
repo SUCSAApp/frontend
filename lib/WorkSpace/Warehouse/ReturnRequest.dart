@@ -71,9 +71,11 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
         apiItems = fetchedItems.map((item) => {
           'name': item['itemName'] ?? 'Unnamed Item',
           'id': item['itemId'] ?? 0,
-          'stockQuantity': item['stockQuantity'] ?? 0, // Corrected field name
+          'stockQuantity': item['stockQuantity'] ?? 0,
         }).toList();
       });
+
+      print('Fetched items from API: $apiItems');
 
     } else {
       print('Failed to load items from API');
@@ -85,8 +87,23 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
   @override
   void initState() {
     super.initState();
+    _applicantNameController;
+    _returnDateController;
+    _eventDateController;
+    _eventNameController;
+    _departmentNameController;
     fetchItems();
     loadUsername();
+  }
+
+  @override
+  void dispose() {
+    _applicantNameController.dispose();
+    _returnDateController.dispose();
+    _eventDateController.dispose();
+    _eventNameController.dispose();
+    _departmentNameController.dispose();
+    super.dispose();
   }
 
   void loadUsername() async {
@@ -114,9 +131,8 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
     });
   }
 
-
   Future<void> createReturnRequest() async {
-    var url = Uri.parse('http://cms.sucsa.org:8005/api/return-requests');
+    final url = Uri.parse('http://cms.sucsa.org:8005/api/return-requests');
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
 
@@ -125,23 +141,32 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
       return;
     }
 
-    var headers = {
+    if (_eventNameController.text.isEmpty || _applicantNameController.text.isEmpty) {
+      print("Event name and applicant are required.");
+      return;
+    }
+
+    if (_items.any((item) => item['id'] == 0)) {
+      print("Invalid item selected. Please select valid items.");
+      return;
+    }
+
+    final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token'
     };
 
-    List<Map<String, dynamic>> returnItemRequests = _items.map((item) {
-      int itemId = item['id'];
-      int requestedQuantity = int.tryParse(item['stockQuantity'].toString()) ?? 0;
-
+    final returnItemRequests = _items.map((item) {
       return {
-        "item": {"itemId": itemId},
-        "name": item['name'],
-        "requestedQuantity": requestedQuantity
+        "item": {
+          "itemId": item['id'],
+          "itemName": item['name'],
+        },
+        "requestedQuantity": item['quantity'],
       };
     }).toList();
 
-    Map<String, dynamic> requestBody = {
+    final requestBody = {
       "returnItemRequests": returnItemRequests,
       "activityName": _eventNameController.text,
       "activityDate": _eventDateController.text,
@@ -149,21 +174,21 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
       "returnDate": _returnDateController.text,
     };
 
+    final body = json.encode(requestBody);
+
     print(requestBody);
 
-    var body = json.encode(requestBody);
 
     try {
-      var response = await http.post(url, headers: headers, body: body);
+      final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         print('Return request submitted successfully');
-        print(response.body);
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('提示',style: TextStyle(color: Color.fromRGBO(29,32,136,1.0), fontWeight: FontWeight.bold)),
-              content: Text('归还申请提交成功', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
+              title: Text('提示', style: TextStyle(color: Color.fromRGBO(29,32,136,1.0), fontWeight: FontWeight.bold)),
+              content: Text('归还申请提交成功', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
               actions: <Widget>[
                 TextButton(
                   child: Text('确定', style: TextStyle(color: Color.fromRGBO(29,32,136,1.0), fontWeight: FontWeight.bold)),
@@ -283,6 +308,7 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
 
                 ElevatedButton(
                   onPressed: () {
+                    print('Items: $_items');
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
                       createReturnRequest();
@@ -350,6 +376,7 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
             _items[index]['id'] = selectedItem['id'];
           });
         }
+
       } else {
         showDialog<void>(
           context: context,

@@ -40,7 +40,7 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
   final TextEditingController _departmentController = TextEditingController();
   final TextEditingController _currencyController = TextEditingController();
   final TextEditingController _totalAmountController = TextEditingController();
-  final List<Map<String, dynamic>> _espenseitems = [];
+  final List<Map<String, dynamic>> _espenseitem = [];
   final TextEditingController _expenseMethodController = TextEditingController();
   final TextEditingController _accountNameController = TextEditingController();
   final TextEditingController _bsbController = TextEditingController();
@@ -115,13 +115,13 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
 
     const String apiUrl = 'http://cms.sucsa.org:8005/api/expense-requests';
 
-    Map<String, dynamic> departmentData = {};
-    if (selectedDepartment != null) {
-      departmentData = {
-        "id": int.parse(selectedDepartment!),
-        "name": _departmentController.text
-      };
-    }
+    Map<String, dynamic> departmentData = {
+      "id": int.parse(selectedDepartment!),
+      "name": departmentList.firstWhere((dept) => dept['id'].toString() == selectedDepartment)['name'],
+    };
+
+    double totalAmount = _espenseitem.fold(0.0, (sum, item) => sum + (item['amount'] as double));
+
 
     Map<String, dynamic> requestData = {
       "eventName": _eventNameController.text,
@@ -129,10 +129,11 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
       "eventDate": _eventDateController.text,
       "applicant": _applicantController.text,
       "currency": selectedCurrency,
-      "expenseItem": _espenseitems,
+      "expenseItems": _espenseitem,
       "invoices": invoiceFileNames,
-      "screenshotFileNames": screenshotFileNames,
+      "screenshots": screenshotFileNames,
       "reimbursementMethod": selectedCurrency,
+      "amount": totalAmount,
     };
 
 
@@ -183,7 +184,6 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
     }
   }
 
-
   Future<String?> uploadFile(File file) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
@@ -207,28 +207,6 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
       print('Failed to upload file: ${response.statusCode}');
       return null;
     }
-  }
-
-
-  Widget _buildDateField(BuildContext context, String label, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        ),
-        ListTile(
-          title: Text(
-            controller.text.isEmpty ? '选择日期' : controller.text,
-            style: TextStyle(fontSize: 16),
-          ),
-          trailing: Icon(Icons.calendar_today),
-          onTap: () => _selectDate(context, controller),
-        ),
-        Divider(color: Colors.grey),
-      ],
-    );
   }
 
   Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
@@ -323,8 +301,8 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
 
   void _addExpenseItem() {
     setState(() {
-      _espenseitems.add({
-        "id": _espenseitems.length + 1,
+      _espenseitem.add({
+        "id": _espenseitem.length + 1,
         "name": "",
         "amount": 0.00
       });
@@ -342,7 +320,7 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
             controller: nameController,
             decoration: InputDecoration(hintText: '费用名称'),
             onChanged: (value) {
-              _espenseitems[index]['name'] = value;
+              _espenseitem[index]['name'] = value;
             },
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -359,7 +337,7 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
             keyboardType: TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(hintText: '金额'),
             onChanged: (value) {
-              _espenseitems[index]['amount'] = double.tryParse(value) ?? 0.00;
+              _espenseitem[index]['amount'] = double.tryParse(value) ?? 0.00;
             },
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -376,7 +354,7 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
           icon: Icon(Icons.delete),
           onPressed: () {
             setState(() {
-              _espenseitems.removeAt(index);
+              _espenseitem.removeAt(index);
             });
           },
         )
@@ -484,9 +462,9 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
                 },
               ),
               SizedBox(height: 14),
-              ..._espenseitems.map((e) => _buildExpenseItemField(_espenseitems.indexOf(e))).toList(),
+              ..._espenseitem.map((e) => _buildExpenseItemField(_espenseitem.indexOf(e))).toList(),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end, // Aligns the button to the right
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   ElevatedButton(
                     onPressed: _addExpenseItem,

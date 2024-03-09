@@ -80,7 +80,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
     }
   }
 
-
   List<Map<String, dynamic>> apiItems = [];
 
   @override
@@ -200,13 +199,13 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
             );
           },
         );
+        _formKey.currentState!.reset();
+        _items.clear();
       } else {
         print('Failed to submit request: ${response.body}');
-        // Handle error response
       }
     } catch (e) {
       print('An error occurred: $e');
-      // Handle exception
     }
   }
 
@@ -247,8 +246,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
   }
 
 
-
-  String? selectedItemId;
 
 
   @override
@@ -377,7 +374,6 @@ class _PickupRequestPageState extends State<PickupRequestPage> {
             return SimpleDialog(
               title: const Text('请选择物品'),
               children: apiItems.map((Map<String, dynamic> item) {
-
                 String displayText = '${item['name']} (库存: ${item['stockQuantity'].toString()})';
                 return SimpleDialogOption(
                   onPressed: () {

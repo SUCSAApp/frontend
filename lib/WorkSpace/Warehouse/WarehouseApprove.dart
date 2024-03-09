@@ -27,13 +27,15 @@ class WarehouseapprovePage extends StatefulWidget {
 }
 
 class _WarehouseapprovePageState extends State<WarehouseapprovePage> with TickerProviderStateMixin {
-  List<dynamic> approvedRequests = [];
+  List<dynamic> approvedwarehouseRequests = [];
+  List<dynamic> approvedreturnRequests = [];
   List<dynamic> pendingRequests = [];
   List<dynamic> Warehouseapproves = [];
   List<dynamic> returnRequests = [];
-  List<dynamic> rejectedRequests = [];
+  List<dynamic> rejectedWareHouseRequests = [];
+  List<dynamic> rejectedReturnRequests = [];
 
-
+  bool _showPending = true;
   bool _showApproved = true;
 
   @override
@@ -73,56 +75,12 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
 
       setState(() {
         Warehouseapproves = decodedResponse;
-        approvedRequests = Warehouseapproves.where((r) => r['status'] == 'APPROVED').toList();
-        rejectedRequests = Warehouseapproves.where((r) => r['status'] == 'REJECTED').toList();
+        approvedwarehouseRequests = Warehouseapproves.where((r) => r['status'] == 'APPROVED').toList();
+        rejectedWareHouseRequests = Warehouseapproves.where((r) => r['status'] == 'REJECTED').toList();
         pendingRequests = Warehouseapproves.where((r) => r['status'] == 'PENDING').toList();
       });
     } else {
       print('Failed to load warehouse requests: ${response.body}');
-    }
-  }
-
-  Future<void> auditWarehouseRequest(int requestId, RequestStatus status) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('token');
-    if (token == null) {
-      print("Token not found. User might not be logged in.");
-      return;
-    }
-
-    final String apiUrl = 'http://cms.sucsa.org:8005/api/warehouse-requests/$requestId/audit';
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    final Map<String, dynamic> requestBody = {
-      'status': status.value,
-    };
-    final String jsonBody = json.encode(requestBody);
-
-
-    try {
-      final response = await http.post(Uri.parse(apiUrl), headers: headers, body: jsonBody);
-
-
-      if (response.statusCode == 200) {
-        print('Warehouse request audited successfully.');
-        setState(() {
-          pendingRequests.removeWhere((r) => r['requestId'] == requestId);
-          if (status != RequestStatus.PENDING) {
-            var auditedRequest = Warehouseapproves.firstWhere((r) => r['requestId'] == requestId);
-            auditedRequest['status'] = status.value;
-            approvedRequests.add(auditedRequest);
-            rejectedRequests.add(auditedRequest);
-          }
-        });
-      } else {
-        print('Failed to audit warehouse request: ${response.body}');
-      }
-    } catch (e) {
-      print('An error occurred while auditing warehouse request: $e');
     }
   }
 
@@ -164,12 +122,56 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
 
       setState(() {
         returnRequests = decodedResponse;
-        approvedRequests = returnRequests.where((r) => r['status'] == 'APPROVED').toList();
-        rejectedRequests = returnRequests.where((r) => r['status'] == 'REJECTED').toList();
+        approvedreturnRequests = returnRequests.where((r) => r['status'] == 'APPROVED').toList();
+        rejectedReturnRequests = returnRequests.where((r) => r['status'] == 'REJECTED').toList();
         pendingRequests = returnRequests.where((r) => r['status'] == 'PENDING').toList();
       });
+      print(returnRequests.last);
     } else {
       print('Failed to load return requests: ${response.body}');
+    }
+  }
+
+  Future<void> auditWarehouseRequest(int requestId, RequestStatus status) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    if (token == null) {
+      print("Token not found. User might not be logged in.");
+      return;
+    }
+
+    final String apiUrl = 'http://cms.sucsa.org:8005/api/warehouse-requests/$requestId/audit';
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    final Map<String, dynamic> requestBody = {
+      'status': status.value,
+    };
+    final String jsonBody = json.encode(requestBody);
+
+
+    try {
+      final response = await http.post(Uri.parse(apiUrl), headers: headers, body: jsonBody);
+
+
+      if (response.statusCode == 200) {
+        print('Warehouse request audited successfully.');
+        setState(() {
+          pendingRequests.removeWhere((r) => r['requestId'] == requestId);
+          if (status != RequestStatus.PENDING) {
+            var auditedRequest = Warehouseapproves.firstWhere((r) => r['requestId'] == requestId);
+            auditedRequest['status'] = status.value;
+            approvedwarehouseRequests.add(auditedRequest);
+          }
+        });
+      } else {
+        print('Failed to audit warehouse request: ${response.body}');
+      }
+    } catch (e) {
+      print('An error occurred while auditing warehouse request: $e');
     }
   }
 
@@ -188,6 +190,7 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
         Uri.parse(apiUrl),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: json.encode({'status': status.value}),
@@ -200,8 +203,7 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
           if (status != RequestStatus.PENDING) {
             var auditedRequest = returnRequests.firstWhere((r) => r['id'] == requestId);
             auditedRequest['status'] = status.value;
-            approvedRequests.add(auditedRequest);
-            rejectedRequests.add(auditedRequest);
+            approvedreturnRequests.add(auditedRequest);
           }
         });
       } else {
@@ -215,32 +217,48 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '仓库审批',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
-      ),
-      body: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildPageButton('已审核', true),
-              SizedBox(width: 20),
-              _buildPageButton('待审核', false),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('仓库审批', style: TextStyle(color: Colors.white)),
+          backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: '待审核'),
+              Tab(text: '已审核'),
             ],
+            onTap: (index) {
+              setState(() {
+                _showPending = index == 0;
+              });
+            },
           ),
-          Expanded(
-            child: _showApproved
-                ? buildRequestList([...approvedRequests, ...rejectedRequests], false)
-                : buildRequestList(pendingRequests, true),
-          ),
-        ],
+        ),
+        body: TabBarView(
+          children: [
+            buildPendingRequestsList(),
+            buildReviewedRequestsList(),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget buildPendingRequestsList() {
+    // Build the list of pending requests
+    return buildRequestList(pendingRequests, true);
+  }
+
+  Widget buildReviewedRequestsList() {
+
+    List<dynamic> reviewedRequests = [
+      ...approvedwarehouseRequests,
+      ...approvedreturnRequests,
+      rejectedWareHouseRequests,
+      rejectedReturnRequests,
+    ];
+    return buildRequestList(reviewedRequests, false);
   }
 
   Widget _buildPageButton(String title, bool isApprovedPage) {
@@ -494,10 +512,31 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
             ),
             Padding(
               padding: EdgeInsets.all(8.0),
-              child: Text('数量', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text('请求数量', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
+            // You might need to adjust if you have a 'category' or other fields to display.
           ]),
         ];
+
+        itemRows.addAll(request['returnItemRequests'].map<TableRow>((itemRequest) {
+          // Check for the presence of 'itemName', if not present, use a placeholder
+          String itemName = itemRequest['item']['itemName'] ?? 'Unknown Item';
+          String requestedQuantity = itemRequest['requestedQuantity'].toString();
+
+          return TableRow(children: [
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(itemName), // Use the item name directly
+            ),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(requestedQuantity),
+            ),
+            // Add more cells if you have more fields to display, like 'category'.
+          ]);
+        }).toList());
+
+
 
 
         return AlertDialog(
