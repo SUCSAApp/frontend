@@ -3,11 +3,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:sucsa_app/WorkSpace/Attendance/UserCreate.dart';
 import 'package:sucsa_app/WorkSpace/Attendance/UserUpdate.dart';
-import 'package:sucsa_app/main.dart';
-
 
 class PersonnelManagementPage extends StatefulWidget {
   const PersonnelManagementPage({super.key});
@@ -69,10 +68,8 @@ class People {
 }
 
 class PersonnelManagementPageState extends State<PersonnelManagementPage> {
-  
-  bool runFutureBuilder = true;
 
-  String token = getToken();
+  bool runFutureBuilder = true;
 
   String? dropdownvalue;
 
@@ -88,45 +85,45 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          
+
           const Padding(
             padding: EdgeInsets.only(left: 10, bottom: 10),
             child: Text("选择部门", style: TextStyle(fontSize: 18)),
           ),
 
           FutureBuilder<List<Department>>(
-            future: getAllDepartments(),
-            builder: (context, snapshot){
-              if(snapshot.hasData){
-                departments = snapshot.data!;
-              }
-              return Container(
-                width: 400,
-                padding: const EdgeInsets.only(left:20, right: 10),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 220, 217, 217),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: DropdownButton(
-                dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-                value: dropdownvalue, style: const TextStyle(fontSize: 15, color: Colors.black),
-                hint: const Text("部门名称", style: TextStyle(fontSize: 15),),
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down),
-                items: departments.map((Department items) { 
-                    return DropdownMenuItem( 
-                      value: items.name, 
-                      child: Text(items.name), 
-                    ); 
-                  }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    runFutureBuilder = true;
-                    dropdownvalue = newValue!;
-                  });
-                },),
-              );
-            })
+              future: getAllDepartments(),
+              builder: (context, snapshot){
+                if(snapshot.hasData){
+                  departments = snapshot.data!;
+                }
+                return Container(
+                  width: 400,
+                  padding: const EdgeInsets.only(left:20, right: 10),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 220, 217, 217),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: DropdownButton(
+                    dropdownColor: const Color.fromARGB(255, 220, 217, 217),
+                    value: dropdownvalue, style: const TextStyle(fontSize: 15, color: Colors.black),
+                    hint: const Text("部门名称", style: TextStyle(fontSize: 15),),
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down),
+                    items: departments.map((Department items) {
+                      return DropdownMenuItem(
+                        value: items.name,
+                        child: Text(items.name),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        runFutureBuilder = true;
+                        dropdownvalue = newValue!;
+                      });
+                    },),
+                );
+              })
 
         ],
       ),
@@ -179,7 +176,7 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
                 if(count == 1){
                   Navigator.push(context, MaterialPageRoute(builder: (context) => UserUpdatePage(people: updatedPeople,)),);
                 }
-                
+
               },),
           ),
 
@@ -198,7 +195,9 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
                 runFutureBuilder = true;
                 deleteUser();
               });},),
-          )
+          ),
+
+
 
         ],
       ),
@@ -207,118 +206,153 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
 
   Widget dataTable(){
     return FutureBuilder<List<People>>(
-      future: runFutureBuilder? getAllMembers() : null,
-      builder: (context, snapshot){
-      if(snapshot.hasData){
-        members = snapshot.data!;
-      }
-      List<DataRow> dataRows = [];
-      for(int i = 0; i < members.length; i ++){
-        if(dropdownvalue == null){
-          dataRows.add(DataRow(
-            cells: [
-              DataCell(Text(members[i].department)),
-              DataCell(Text(members[i].sur)),
-              DataCell(Text(members[i].name)),
-            ],
-            selected: members[i].selected,
-            onSelectChanged: (value){
-              setState(() {
-                runFutureBuilder = false;
-                members[i].selected = value!;
-              });
-            },
-          ));
-        }else{
-          if(dropdownvalue == members[i].department){
-            dataRows.add(DataRow(
-              cells: [
-                DataCell(Text(members[i].department)),
-                DataCell(Text(members[i].sur)),
-                DataCell(Text(members[i].name)),
-              ],
-              selected: members[i].selected,
-              onSelectChanged: (value){
-                setState(() {
-                  runFutureBuilder = false;
-                  members[i].selected = value!;
-                });
-              },
-            ));
+        future: runFutureBuilder? getAllMembers() : null,
+        builder: (context, snapshot){
+          if(snapshot.hasData){
+            members = snapshot.data!;
           }
-        }
-      }
-      
-      return DataTable(
-        columns: const [
-          DataColumn(label: Text("部门", style: TextStyle(fontWeight: FontWeight.bold),)),
-          DataColumn(label: Text("姓", style: TextStyle(fontWeight: FontWeight.bold),)),
-          DataColumn(label: Text("名", style: TextStyle(fontWeight: FontWeight.bold),)),
-        ],
-        rows: dataRows, showBottomBorder: true,
-      );
-    });
-    
+          List<DataRow> dataRows = [];
+          for(int i = 0; i < members.length; i ++){
+            if(dropdownvalue == null){
+              dataRows.add(DataRow(
+                cells: [
+                  DataCell(Text(members[i].department)),
+                  DataCell(Text(members[i].sur)),
+                  DataCell(Text(members[i].name)),
+                ],
+                selected: members[i].selected,
+                onSelectChanged: (value){
+                  setState(() {
+                    runFutureBuilder = false;
+                    members[i].selected = value!;
+                  });
+                },
+              ));
+            }else{
+              if(dropdownvalue == members[i].department){
+                dataRows.add(DataRow(
+                  cells: [
+                    DataCell(Text(members[i].department)),
+                    DataCell(Text(members[i].sur)),
+                    DataCell(Text(members[i].name)),
+                  ],
+                  selected: members[i].selected,
+                  onSelectChanged: (value){
+                    setState(() {
+                      runFutureBuilder = false;
+                      members[i].selected = value!;
+                    });
+                  },
+                ));
+              }
+            }
+          }
+
+          return DataTable(
+            columns: const [
+              DataColumn(label: Text("部门", style: TextStyle(fontWeight: FontWeight.bold),)),
+              DataColumn(label: Text("姓", style: TextStyle(fontWeight: FontWeight.bold),)),
+              DataColumn(label: Text("名", style: TextStyle(fontWeight: FontWeight.bold),)),
+            ],
+            rows: dataRows, showBottomBorder: true,
+          );
+        });
+
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(  //如果不加MaterialApp，checkbox有bug，可能背景色重合了
+    return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
-          title: const Text(
-            "人员管理",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
-          )
+            backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
+            title: const Text(
+              "人员管理",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            )
         ),
         body: ListView(
           children: [
             topMenu(),
             threeButtons(),
             dataTable(),
-            ],
-          ),
+          ],
+        ),
       ),
-      
-      
+
+
     );
   }
 
-  Future<void> deleteUser() async{
+  Future<void> deleteUser() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
     String url = "http://cms.sucsa.org:8005/api/user/deleteUser";
 
+    bool success = false;
+
     int i = 0;
-    while(i < members.length){
-      if(members[i].selected == true){
-        final response = await http.post(Uri.parse(url), headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": "Bearer $token",},
-        body: jsonEncode(<String, dynamic>{
-          "userId": members[i].id,
-        }));
+    while (i < members.length) {
+      if (members[i].selected) {
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer $token",
+          },
+          body: jsonEncode(<String, dynamic>{
+            "userId": members[i].id,
+          }),
+        );
 
-        print(response.body);  //有些用户删不掉，SQL有问题
-
-        members.remove(members[i]);
-
-        continue;
+        if (response.statusCode == 200) {
+          print("User deleted successfully");
+          members.removeAt(i);
+          success = true;
+          continue;
+        } else {
+          print("Failed to delete user: ${response.body}");
+        }
       }
-      i += 1;
+      i++;
     }
 
+    if (success) {
+      showSuccessDialog();
+    }
+  }
 
-
+  Future<void> showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content: const Text('User(s) deleted successfully.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                setState(() {
+                  runFutureBuilder = true;
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> dialogBuilder(BuildContext context){
@@ -342,7 +376,17 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
   }
 
 
+
+
+  Future<String?> _getToken() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+
   Future<List<Department>> getAllDepartments() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
     List<Department> data = [];
 
     String url = "http://cms.sucsa.org:8005/api/department/list";
@@ -350,19 +394,20 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",});
-    
+
     List<dynamic> message = json.decode(utf8.decode(response.bodyBytes))['result'];
     message.forEach((element) {
       var department = Department(id: element["id"], name: element["name"]);
       data.add(department);
     });
-    
 
     return data;
-    
+
   }
 
   Future<List<People>> getAllMembers() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
     List<People> data = [];
 
     String url = "http://cms.sucsa.org:8005/api/department/list";
@@ -370,7 +415,7 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",});
-    
+
     List<dynamic> message = json.decode(utf8.decode(response.bodyBytes))['result'];
     message.forEach((element) {
       String myDepartment = element["name"] ?? "";
@@ -378,28 +423,28 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
       List<dynamic> users = element["users"];
       users.forEach((element2) {
         var people = People(
-          id: element2["userId"] ?? 0,
-          username: element2["username"] ?? "",
-          sur: element2["lastname"] ?? "",
-          name: element2["firstname"] ?? "",
-          sex: element2["sex"] ?? 1,
-          phone: element2["phone"] ?? "",
-          email: element2["email"] ?? "",
-          degree: element2["degree"] ?? "",
-          major: element2["major"] ?? "",
-          begin: element2["beginSemester"]["id"] ?? 0,
-          end: element2["endSemester"]["id"] ?? 0,
-          usu: element2["usuNumber"] ?? "",
-          date: element2["usuExpiry"] ?? "",
-          sid: element2["sid"] ?? "",
-          department: myDepartment,
-          departmentId: myDepartmentId);
+            id: element2["userId"] ?? 0,
+            username: element2["username"] ?? "",
+            sur: element2["lastname"] ?? "",
+            name: element2["firstname"] ?? "",
+            sex: element2["sex"] ?? 1,
+            phone: element2["phone"] ?? "",
+            email: element2["email"] ?? "",
+            degree: element2["degree"] ?? "",
+            major: element2["major"] ?? "",
+            begin: element2["beginSemester"]["id"] ?? 0,
+            end: element2["endSemester"]["id"] ?? 0,
+            usu: element2["usuNumber"] ?? "",
+            date: element2["usuExpiry"] ?? "",
+            sid: element2["sid"] ?? "",
+            department: myDepartment,
+            departmentId: myDepartmentId);
         data.add(people);
-       });
+      });
     });
 
     return data;
-    
+
   }
 
 

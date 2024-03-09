@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
+
 
 
 
@@ -62,6 +64,36 @@ class Restaurant {
   }
 }
 
+class RestaurantEvent {
+  final int id;
+  final String date;
+  final String link;
+  final String title;
+  final String img;
+  final int orderNumber;
+
+  RestaurantEvent({
+    required this.id,
+    required this.date,
+    required this.link,
+    required this.title,
+    required this.img,
+    required this.orderNumber,
+  });
+
+  factory RestaurantEvent.fromJson(Map<String, dynamic> json) {
+    return RestaurantEvent(
+      id: json['id'],
+      date: json['date'],
+      link: json['link'],
+      title: json['title'],
+      img: json['img'],
+      orderNumber: json['orderNumber'],
+    );
+  }
+}
+
+
 class StorePage extends StatefulWidget {
   const StorePage({Key? key}) : super(key: key);
 
@@ -71,15 +103,37 @@ class StorePage extends StatefulWidget {
 
 class _StorePageState extends State<StorePage> {
   List<Restaurant> restaurants = [];
-  List<Restaurant> allRestaurants = []; // Added to keep a copy of the original list
+  List<Restaurant> allRestaurants = [];
+  List<RestaurantEvent> restaurantEvents = [];
   bool isLoading = true;
   bool isListView = false;
+  Position? _currentUserPosition;
+
 
   @override
   void initState() {
     super.initState();
     fetchRestaurants();
     requestLocationPermission();
+    fetchRestaurantEvents();
+  }
+
+  Future<void> fetchRestaurantEvents() async {
+    final response = await http.post(
+      Uri.parse('https://sucsa.org:8004/api/public/restaurantEvents'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body)['data'];
+      setState(() {
+        restaurantEvents = data.map((json) => RestaurantEvent.fromJson(json)).toList();
+      });
+    } else {
+      print('Failed to fetch events');
+    }
   }
 
   bool isRequestingLocationPermission = false;
@@ -92,21 +146,28 @@ class _StorePageState extends State<StorePage> {
     isRequestingLocationPermission = true; // Set the flag to indicate that a request is in progress.
 
     try {
+      print('Requesting location permission...');
       LocationPermission permission = await Geolocator.requestPermission();
+      print('Permission status: $permission');
       if (permission == LocationPermission.deniedForever) {
+        print('Permission denied forever, opening app settings...');
         await openAppSettings();
       } else if (permission == LocationPermission.denied) {
+        print('Permission denied by user.');
         // Handle the case where the user denies the permission.
       } else {
         // Permission granted, we can now call the method to get the current location.
+        print('Permission granted, getting current location...');
         await getCurrentLocation();
       }
     } on Exception catch (e) {
-      // Handle any exceptions here.
+      print('An exception occurred: $e');
+      throw Exception('Failed to load restaurants'); // Consider providing a more specific error message
     } finally {
       isRequestingLocationPermission = false; // Reset the flag when done.
     }
   }
+
 
 
 
@@ -124,8 +185,8 @@ class _StorePageState extends State<StorePage> {
         List<Restaurant> fetchedRestaurants = data.map((json) => Restaurant.fromJson(json)).toList();
 
         setState(() {
-          allRestaurants = fetchedRestaurants; // Update the allRestaurants list with fetched data.
-          restaurants = fetchedRestaurants; // Update the restaurants list with fetched data.
+          allRestaurants = fetchedRestaurants;
+          restaurants = fetchedRestaurants;
           isLoading = false;
         });
       } else {
@@ -166,7 +227,6 @@ class _StorePageState extends State<StorePage> {
     if (selected != null) {
       setState(() {
         selectedTag = selected;
-
         restaurants = restaurants.where((restaurant) {
           if (restaurant.tags == null || selectedTag == null) {
             return true;
@@ -212,7 +272,7 @@ class _StorePageState extends State<StorePage> {
             icon: Icon(isListView ? Icons.grid_view : Icons.list),
             onPressed: () {
               setState(() {
-                isListView = !isListView; // Toggle the view type
+                isListView = !isListView;
               });
             },
           ),
@@ -220,23 +280,61 @@ class _StorePageState extends State<StorePage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          if (selectedTag != null) buildFilterChip(), // Only build the filter chip if there's a selected tag
-          Expanded(
-            child: isListView ? buildListView() : buildGridView(),
+          : CustomScrollView(
+        slivers: <Widget>[
+          if (restaurantEvents.isNotEmpty)
+            SliverToBoxAdapter(
+              child: CarouselSlider(
+                options: CarouselOptions(
+                  autoPlay: true,
+                  aspectRatio: 2.0,
+                  enlargeCenterPage: true,
+                ),
+                items: restaurantEvents.map((event) => Builder(
+                  builder: (BuildContext context) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      margin: EdgeInsets.symmetric(horizontal: 5.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: GestureDetector(
+                          onTap: () {
+                            _launchURL(event.link);
+                          },
+                          child: Image.network(
+                            event.img,
+                            fit: BoxFit.cover,
+                            height: 200,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                )).toList(),
+              ),
+            ),
+          SliverPadding(
+            padding: EdgeInsets.all(8.0),
+            sliver: isListView ? buildSliverList() : buildSliverGrid(),
           ),
         ],
       ),
     );
   }
 
-  Widget buildListView() {
-    return ListView.builder(
-      itemCount: restaurants.length,
-      itemBuilder: (context, index) {
-        final restaurant = restaurants[index];
+  void _launchURL(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
 
+  Widget buildSliverList() {
+    return SliverList(
+        delegate: SliverChildBuilderDelegate(
+    (BuildContext context, int index) {
+      final restaurant = restaurants[index];
         return FutureBuilder<double>(
           future: _calculateDistance(restaurant),
           builder: (context, snapshot) {
@@ -329,20 +427,20 @@ class _StorePageState extends State<StorePage> {
           },
         );
       },
+          childCount: restaurants.length,
+        )
     );
   }
 
-
-  Widget buildGridView() {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  Widget buildSliverGrid() {
+    return SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 1.0,
-      ),
-      itemCount: restaurants.length,
-      itemBuilder: (context, index) {
-        final restaurant = restaurants[index];
-
+    ),
+    delegate: SliverChildBuilderDelegate(
+    (BuildContext context, int index) {
+    final restaurant = restaurants[index];
         return Card(
           elevation: 4.0,
           margin: EdgeInsets.all(8.0),
@@ -378,9 +476,10 @@ class _StorePageState extends State<StorePage> {
           ),
         );
       },
+    childCount: restaurants.length,
+    )
     );
   }
-
 
   void openDetailPage(Restaurant restaurant) {
     Navigator.of(context).push(
@@ -399,130 +498,180 @@ class DetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color.fromRGBO(29, 32, 136, 1.0), // Use your preferred color
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20),
-            // Remove the SizedBox that was previously used to create space
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  restaurant.img,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 200,
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
+        appBar: AppBar(
+          title: Text(restaurant.title, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
+        ),
+        body: SingleChildScrollView(
+            child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    restaurant.title,
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
-                  SizedBox(height: 10),
-                  Divider(),
-                  Row(
-                    children: [
-                      Icon(Icons.phone, color: Colors.blue), // Phone icon
-                      SizedBox(width: 10),
-                      SelectableText(
-                        restaurant.phone ?? 'No phone provided',
-                        style: TextStyle(
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.local_offer, color: Colors.purple), // Discount icon
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: SelectableText(
-                          restaurant.discount ?? 'No discount provided',
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.wechat, color: Colors.green), // WeChat icon
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: SelectableText(
-                          restaurant.wechat ?? 'No WeChat provided',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, color: Colors.red), // Location icon
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(restaurant.address),
-                      ),
-                    ],
-                  ),
                   SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => launchMap(restaurant.address),
-                    child: SelectableText('Open in Maps'),
-                    style: ElevatedButton.styleFrom(
-                      primary: Color.fromRGBO(29, 32, 136, 1.0), // Button color
-                      onPrimary: Colors.white, // Text color
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        restaurant.img,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: 200,
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          restaurant.title,
+                          style: Theme.of(context).textTheme.headline6,
+                        ),
+                        SizedBox(height: 10),
+                        Divider(),
+                        Row(
+                          children: [
+                            Icon(Icons.phone, color: Colors.blue), // Phone icon
+                            SizedBox(width: 10),
+                            SelectableText(
+                              restaurant.phone ?? 'No phone provided',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10),
+                        SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Icon(Icons.local_offer, color: Colors.purple), // Discount icon
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: SelectableText(
+                                restaurant.discount ?? 'No discount provided',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Icon(Icons.wechat, color: Colors.green), // WeChat icon
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: SelectableText(
+                                restaurant.wechat ?? 'No WeChat provided',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on, color: Colors.red), // Location icon
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(restaurant.address),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+
+                        ElevatedButton(
+                          onPressed: () => _openWithDialog(context, restaurant.address),
+                          child: Text('Open with'),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white, backgroundColor: Color.fromRGBO(29, 32, 136, 1.0), // Text color
+                          ),
+
+                        ),
+                      ],
+                    ),
+                  ),
+                ])
+        )
     );
   }
+
+
+  void _openWithDialog(BuildContext context, String address) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: new Icon(FontAwesomeIcons.google),
+                title: new Text('Google Maps'),
+                onTap: () => _launchMapsUrl(context, address, 'google'),
+              ),
+              ListTile(
+                leading: new Icon(FontAwesomeIcons.apple),
+                title: new Text('Apple Maps'),
+                onTap: () => _launchMapsUrl(context, address, 'apple'),
+              ),
+              if (Platform.isAndroid)
+                ListTile(
+                  leading: new Icon(FontAwesomeIcons.android),
+                  title: new Text('Native Map'),
+                  onTap: () => _launchMapsUrl(context, address, 'native'),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+  void _launchMapsUrl(BuildContext context, String address, String mapType) async {
+    String url;
+    if (mapType == 'google') {
+      url = "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}";
+    } else if (mapType == 'apple') {
+      url = "http://maps.apple.com/?q=${Uri.encodeComponent(address)}";
+    } else { // 'native' for Android
+      url = "geo:0,0?q=${Uri.encodeComponent(address)}";
+    }
+
+    Navigator.pop(context); // Close the dialog
+
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not launch map')),
+      );
+    }
+  }
 }
+
 
 Future<Position> getCurrentLocation() async {
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
     permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied) {
-      // Permissions are denied, throw an error or handle it by showing a message to the user.
       return Future.error('Location permission denied by user.');
     }
   }
 
   if (permission == LocationPermission.deniedForever) {
-    // Permissions are denied forever, take the user to the app settings.
     openAppSettings();
     return Future.error('Location permissions are permanently denied, we cannot request permissions.');
   }
-
-  // At this point, permissions are granted, so we can fetch the current location.
   return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 }
 
@@ -542,27 +691,20 @@ Future<double> _calculateDistance(Restaurant restaurant) async {
   }
 
 
-  Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  Position currentPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium);
   double distanceInMeters = Geolocator.distanceBetween(
     currentPosition.latitude,
     currentPosition.longitude,
     restaurant.latitude ?? 0,
     restaurant.longitude ?? 0,
   );
-  return distanceInMeters / 1000; // Convert to kilometers.
+  return distanceInMeters / 1000;
 }
 
 
 
-void launchMap(String address) async {
-  String googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=$address";
-  String appleMapsUrl = "http://maps.apple.com/?q=$address";
-  String mapUrl = Platform.isIOS ? appleMapsUrl : googleMapsUrl;
 
-  if (await canLaunch(mapUrl)) {
-    await launch(mapUrl);
-  } else {
-    throw 'Could not launch $mapUrl';
-  }
-}
+
+
+
 

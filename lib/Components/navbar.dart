@@ -26,7 +26,7 @@ class NavBar extends StatefulWidget {
   _NavBarState createState() => _NavBarState();
 }
 class _NavBarState extends State<NavBar> {
-  // Your state and methods...
+
 
   @override
   Widget build(BuildContext context) {

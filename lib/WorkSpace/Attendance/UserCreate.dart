@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sucsa_app/WorkSpace/Attendance/PersonnelManagement.dart';
 import 'package:http/http.dart' as http;
 import 'package:sucsa_app/main.dart';
@@ -18,7 +19,6 @@ class UserCreatePage extends StatefulWidget {
 
 class UserCreatePageState extends State<UserCreatePage> {
 
-  String token = getToken();
 
   String username = "";
   String sur = "";
@@ -106,67 +106,67 @@ class UserCreatePageState extends State<UserCreatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
-        title: const Text(
-          "创建用户",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        )
+          backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
+          title: const Text(
+            "创建用户",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          )
       ),
       body: inputContents(),
-      
+
     );
   }
 
-Widget textInput(String defaultInfo1, String defaultInfo2){
-  return Container(
-    margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
-              width: 200,
-              padding: const EdgeInsets.only(left: 20),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 220, 217, 217),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: TextField(
-                onChanged: (value) {
-                  switch(defaultInfo1){
-                    case "用户名": username = value; break;
-                    case "姓": sur = value; break;
-                    case "名": name = value; break;
-                    case "电话": phone = value; break;
-                    case "邮箱": email = value; break;
-                    case "学位": degree = value; break;
-                    case "专业": major = value; break;
-                    case "USU Number": usu = value; break;
-                    case "SID": sid = value; break;
-                  }
-                },
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: defaultInfo2, hintStyle: const TextStyle(fontSize: 15),
-                ),
+  Widget textInput(String defaultInfo1, String defaultInfo2){
+    return Container(
+      margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
+            width: 200,
+            padding: const EdgeInsets.only(left: 20),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 220, 217, 217),
+              borderRadius: BorderRadius.circular(50),
             ),
-            )
-      ],
-    ),
-  );
-}
+            child: TextField(
+              onChanged: (value) {
+                switch(defaultInfo1){
+                  case "用户名": username = value; break;
+                  case "姓": sur = value; break;
+                  case "名": name = value; break;
+                  case "电话": phone = value; break;
+                  case "邮箱": email = value; break;
+                  case "学位": degree = value; break;
+                  case "专业": major = value; break;
+                  case "USU Number": usu = value; break;
+                  case "SID": sid = value; break;
+                }
+              },
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: defaultInfo2, hintStyle: const TextStyle(fontSize: 15),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
 
-Widget semesterDropDownButton(String defaultInfo1, String defaultInfo2){
-  return Container(
-    margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
+  Widget semesterDropDownButton(String defaultInfo1, String defaultInfo2){
+    return Container(
+      margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
               width: 200,
               padding: const EdgeInsets.only(left: 20, right: 10),
               decoration: BoxDecoration(
@@ -179,12 +179,12 @@ Widget semesterDropDownButton(String defaultInfo1, String defaultInfo2){
                 value: defaultInfo1 == "加入学联学期"? begin : end, style: const TextStyle(fontSize: 15, color: Colors.black),
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down),
-                items: semesterList.map((items) { 
-                    return DropdownMenuItem( 
-                      value: items["id"].toString(), 
-                      child: Text(items["name"]), 
-                    ); 
-                  }).toList(),
+                items: semesterList.map((items) {
+                  return DropdownMenuItem(
+                    value: items["id"].toString(),
+                    child: Text(items["name"]),
+                  );
+                }).toList(),
                 onChanged: (String? value) {
                   setState(() {
                     switch(defaultInfo1){
@@ -193,20 +193,20 @@ Widget semesterDropDownButton(String defaultInfo1, String defaultInfo2){
                     }
                   });
                 },)
-            )
-      ],
-    ),
-  );
-}
+          )
+        ],
+      ),
+    );
+  }
 
-Widget sexDropDownButton(String defaultInfo1, String defaultInfo2){
-  return Container(
-    margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
+  Widget sexDropDownButton(String defaultInfo1, String defaultInfo2){
+    return Container(
+      margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
               width: 200,
               padding: const EdgeInsets.only(left: 20, right: 10),
               decoration: BoxDecoration(
@@ -219,31 +219,31 @@ Widget sexDropDownButton(String defaultInfo1, String defaultInfo2){
                 value: sex, style: const TextStyle(fontSize: 15, color: Colors.black),
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down),
-                items: sexList.map((items) { 
-                    return DropdownMenuItem( 
-                      value: items["id"].toString(), 
-                      child: Text(items["sex"]), 
-                    ); 
-                  }).toList(),
+                items: sexList.map((items) {
+                  return DropdownMenuItem(
+                    value: items["id"].toString(),
+                    child: Text(items["sex"]),
+                  );
+                }).toList(),
                 onChanged: (String? value) {
                   setState(() {
                     sex = value;
                   });
                 },)
-            )
-      ],
-    ),
-  );
-}
+          )
+        ],
+      ),
+    );
+  }
 
-Widget degreeDropDownButton(String defaultInfo1, String defaultInfo2){
-  return Container(
-    margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
+  Widget degreeDropDownButton(String defaultInfo1, String defaultInfo2){
+    return Container(
+      margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
               width: 200,
               padding: const EdgeInsets.only(left: 20, right: 10),
               decoration: BoxDecoration(
@@ -256,64 +256,64 @@ Widget degreeDropDownButton(String defaultInfo1, String defaultInfo2){
                 value: degree, style: const TextStyle(fontSize: 15, color: Colors.black),
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down),
-                items: degreeList.map((String items) { 
-                    return DropdownMenuItem( 
-                      value: items, 
-                      child: Text(items), 
-                    ); 
-                  }).toList(),
+                items: degreeList.map((String items) {
+                  return DropdownMenuItem(
+                    value: items,
+                    child: Text(items),
+                  );
+                }).toList(),
                 onChanged: (String? value) {
                   setState(() {
                     degree = value;
                   });
                 },)
-            )
-      ],
-    ),
-  );
-}
+          )
+        ],
+      ),
+    );
+  }
 
-Widget dateDropDownButton(String defaultInfo1, String defaultInfo2){
-  return Container(
-    margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
-              width: 200,
-              padding: const EdgeInsets.only(left: 20, right: 10),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 220, 217, 217),
-                borderRadius: BorderRadius.circular(50),
+  Widget dateDropDownButton(String defaultInfo1, String defaultInfo2){
+    return Container(
+      margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
+            width: 200,
+            padding: const EdgeInsets.only(left: 20, right: 10),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 220, 217, 217),
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: DateTimePicker(  //日期选择器颜色似乎和背景色重合了
+              dateMask: "yyyy-MM-dd",
+              initialValue: "",
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: defaultInfo2, hintStyle: const TextStyle(fontSize: 15),
               ),
-              child: DateTimePicker(  //日期选择器颜色似乎和背景色重合了
-                dateMask: "yyyy-MM-dd",
-                initialValue: "",
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: defaultInfo2, hintStyle: const TextStyle(fontSize: 15),
-                ),
-                onChanged: (value) => date = value,
-                validator: (value) => date = value!,
-                onSaved: (newValue) => date = newValue!,
-              ),
-            )
-      ],
-    ),
-  );
-}
+              onChanged: (value) => date = value,
+              validator: (value) => date = value!,
+              onSaved: (newValue) => date = newValue!,
+            ),
+          )
+        ],
+      ),
+    );
+  }
 
-Widget departmentDropDownButton(String defaultInfo1, String defaultInfo2){
-  return Container(
-    margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
+  Widget departmentDropDownButton(String defaultInfo1, String defaultInfo2){
+    return Container(
+      margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
               width: 200,
               padding: const EdgeInsets.only(left: 20, right: 10),
               decoration: BoxDecoration(
@@ -326,24 +326,24 @@ Widget departmentDropDownButton(String defaultInfo1, String defaultInfo2){
                 value: department, style: const TextStyle(fontSize: 15, color: Colors.black),
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down),
-                items: departmentList.map((items) { 
-                    return DropdownMenuItem( 
-                      value: items["id"].toString(),
-                      child: Text(items["name"]), 
-                    ); 
-                  }).toList(),
+                items: departmentList.map((items) {
+                  return DropdownMenuItem(
+                    value: items["id"].toString(),
+                    child: Text(items["name"]),
+                  );
+                }).toList(),
                 onChanged: (String? value) {
                   setState(() {
                     department = value;
                   });
                 },)
-            )
-      ],
-    ),
-  );
-}
+          )
+        ],
+      ),
+    );
+  }
 
-Widget twoButtons(){
+  Widget twoButtons(){
     return Container(
       margin: const EdgeInsets.all(30.0),
       child: Row(
@@ -383,29 +383,32 @@ Widget twoButtons(){
   }
 
   Future<void> createUser() async{
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
     String url = "http://cms.sucsa.org:8005/api/user/create";
     final response = await http.post(Uri.parse(url), headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",},
-      body: jsonEncode(<String, dynamic>{
-        "username": username,
-        "firstname": name,
-        "lastname": sur,
-        "sex": int.parse(sex!),
-        "phone": phone,
-        "email": email,
-        "beginSemester": {"id": int.parse(begin!)},
-        "endSemester": {"id": int.parse(end!)},
-        "degree": degree,
-        "major": major,
-        "usuExpiry": DateTime.parse("${date.substring(0,10)} 00:00:00+1000").toIso8601String(),
-        "usuNumber": usu,
-        "sid": sid,
-        "department": {"id": int.parse(department!)},
-      }));
+        body: jsonEncode(<String, dynamic>{
+          "username": username,
+          "firstname": name,
+          "lastname": sur,
+          "sex": int.parse(sex!),
+          "phone": phone,
+          "email": email,
+          "beginSemester": {"id": int.parse(begin!)},
+          "endSemester": {"id": int.parse(end!)},
+          "degree": degree,
+          "major": major,
+          "usuExpiry": DateTime.parse("${date.substring(0,10)} 00:00:00+1000").toIso8601String(),
+          "usuNumber": usu,
+          "sid": sid,
+          "department": {"id": int.parse(department!)},
+        }));
 
-      print(response.body);
+    print(response.body);
   }
 
 

@@ -1,15 +1,13 @@
 import 'dart:math';
 
-import 'package:sucsa_app/main.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sucsa_app/Alumini/alumni.dart';
 import 'package:sucsa_app/Wode/Staff.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../activity/activity_page.dart';
 import '../shangjia/store.dart';
 import '../Wode/Staff.dart';
-// Assuming the NavBar is in the same directory
 import 'package:sucsa_app/Components/navbar.dart';
 
 import 'package:sucsa_app/Staticpg1/home_static_pg.dart';
@@ -43,7 +41,6 @@ class Activity{
 }
 
 
-
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
@@ -51,7 +48,7 @@ class _HomePageState extends State<HomePage> {
     const ActivityPage(),
     const StorePage(),
     const AlumniPage(),
-    StaffPage(),
+    const StaffPage(),
   ];
 
   Widget topBanner(){
@@ -139,7 +136,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget textTitle(){  //最新动态
+  Widget textTitle(){
     return const Padding(
           padding: EdgeInsets.only(top: 5.0, left: 20.0),
           child: Text('最新动态', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
@@ -152,10 +149,10 @@ class _HomePageState extends State<HomePage> {
       decoration: const BoxDecoration(
         boxShadow: [
           BoxShadow(
-                  color: Colors.grey,
-                  blurRadius: 10.0,
-                  offset: Offset(0.0, 1.0),
-                ),
+            color: Colors.grey,
+            blurRadius: 10.0,
+            offset: Offset(0.0, 1.0),
+          ),
         ],
       ),
       child: Card(
@@ -175,20 +172,20 @@ class _HomePageState extends State<HomePage> {
 
                   Positioned.fill(
                     child: Align(
-                      alignment: Alignment.topLeft,
-                      child: ListTile(
-                        title: Text(title, maxLines: 4, overflow: TextOverflow.ellipsis,),
-                        titleAlignment: ListTileTitleAlignment.top,
-                        titleTextStyle: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                        ),
-                        subtitle: Text(subtitle, maxLines: 3, overflow: TextOverflow.ellipsis,),
-                        subtitleTextStyle: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      )
+                        alignment: Alignment.topLeft,
+                        child: ListTile(
+                          title: Text(title, maxLines: 4, overflow: TextOverflow.ellipsis,),
+                          titleAlignment: ListTileTitleAlignment.top,
+                          titleTextStyle: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                          subtitle: Text(subtitle, maxLines: 3, overflow: TextOverflow.ellipsis,),
+                          subtitleTextStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        )
                     ),
                   ),
 
@@ -196,7 +193,7 @@ class _HomePageState extends State<HomePage> {
                     bottom: 0,
                     right: 5,
                     child: IconButton(onPressed: () {_launchUrl(Uri.parse(url));}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
-                    )
+                  )
 
                 ],
               ),
@@ -213,10 +210,10 @@ class _HomePageState extends State<HomePage> {
       decoration: const BoxDecoration(
         boxShadow: [
           BoxShadow(
-                  color: Colors.grey,
-                  blurRadius: 10.0,
-                  offset: Offset(0.0, 1.0),
-                ),
+            color: Colors.grey,
+            blurRadius: 10.0,
+            offset: Offset(0.0, 1.0),
+          ),
         ],
       ),
       child: Card(
@@ -232,20 +229,20 @@ class _HomePageState extends State<HomePage> {
 
                   Positioned.fill(
                     child: Align(
-                      alignment: Alignment.topLeft,
-                      child: ListTile(
-                        title: Text(title, maxLines: 4, overflow: TextOverflow.ellipsis,),
-                        titleAlignment: ListTileTitleAlignment.top,
-                        titleTextStyle: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                        ),
-                        subtitle: Text(subtitle, maxLines: 3, overflow: TextOverflow.ellipsis,),
-                        subtitleTextStyle: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      )
+                        alignment: Alignment.topLeft,
+                        child: ListTile(
+                          title: Text(title, maxLines: 4, overflow: TextOverflow.ellipsis,),
+                          titleAlignment: ListTileTitleAlignment.top,
+                          titleTextStyle: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                          ),
+                          subtitle: Text(subtitle, maxLines: 3, overflow: TextOverflow.ellipsis,),
+                          subtitleTextStyle: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        )
                     ),
                   ),
 
@@ -253,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                     bottom: 0,
                     right: 5,
                     child: IconButton(onPressed: () {_launchUrl(Uri.parse(url));}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
-                    )
+                  )
 
                 ],
               ),
@@ -268,7 +265,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<List<Activity>> getRequest() async {  //POST REQUEST
+  Future<List<Activity>> getRequest() async {
     String url = 'https://sucsa.org:8004/api/public/events';
     final res = await http.post(Uri.parse(url));
 
@@ -276,7 +273,7 @@ class _HomePageState extends State<HomePage> {
 
     List<dynamic> data = message['data'];
 
-    List<Activity> events = [];  //存储所有推文
+    List<Activity> events = [];
     data.forEach((element) {
       String title = element["title"];
       String img = element["img"];
@@ -316,10 +313,10 @@ class _HomePageState extends State<HomePage> {
       body: Center(
         child: LayoutBuilder(builder: (context, constraints) {
           if(_selectedIndex != 0){
-            return _widgetOptions.elementAt(_selectedIndex - 1);  //Narbar跳转到其它页面
+            return _widgetOptions.elementAt(_selectedIndex - 1);
           }else{
-            return ListView(  //主页内容
-                children: [
+            return ListView(
+              children: [
                 topBanner(),
                 threeButtons(),
                 textTitle(),
@@ -338,14 +335,14 @@ class _HomePageState extends State<HomePage> {
                           }else{
                             return bottomView2(result[index].link, result[index].title, result[index].date, result[index].img);
                           }
-                          },
-                        );
+                        },
+                      );
                     }
                     return Container();  //无数据，返回空
                   },
                 )
-                ],
-              );
+              ],
+            );
           }
         },),
       ),

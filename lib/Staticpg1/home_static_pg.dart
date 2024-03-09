@@ -29,10 +29,10 @@ class Organization {
 class _HomeStaticPage1State extends State<HomeStaticPage1> {
   final List<Organization> organizations = [
     Organization(
-      name: 'USU',
-      logoUrl: 'lib/assets/官方合作/university-of-sydney-union 1.png',
-      description: '悉尼大学学生工会 (University of Sydney Union) 成立于1874年， 是一个为尊重学生的多元讨论而设立的社团，是澳大利亚最大的、独立的学生组织。 USU以非盈利为荣，提供广泛的服务、活动、项目、设施和机会，帮助每个学生充分利用他们在大学的时间。 除了支持200多个学生社团外，USU还负责在讲座和考试之外提供许多有趣的活动项目， 包括大型节日、派对、演出和大量以学生为中心的活动， 以及学生志愿者计划、学生领导和带薪工作机会。 USU还通过校内的咖啡馆、商店和官网提供餐饮和正版学校周边商品。',
-      link: 'https://usu.edu.au/',
+      name: '中国驻悉尼总领馆',
+      logoUrl: 'lib/assets/官方合作/中国驻悉尼总领事馆.png',
+      description: '中国于1979年3月19日在悉尼设立总领事馆，领区为新南威尔士州。 新州位于澳大利亚东南部，是澳历史最悠久、人口最多、经济最发达的州。 新州在发展对华关系方面长期走在澳各州区前列。 近年来，中国连续多年保持新州最大贸易伙伴地位， 新州吸引了近半数中国对澳投资、约六成中国游客和超过三成中国留学生。',
+      link: 'http://sydney.china-consulate.gov.cn/',
     ),
     Organization(
       name: 'SRC',
@@ -53,10 +53,10 @@ class _HomeStaticPage1State extends State<HomeStaticPage1> {
       link: 'https://sydneyuniversity.cn/',
     ),
     Organization(
-      name: '中国驻悉尼总领馆',
-      logoUrl: 'lib/assets/官方合作/中国驻悉尼总领事馆.png',
-      description: '中国于1979年3月19日在悉尼设立总领事馆，领区为新南威尔士州。 新州位于澳大利亚东南部，是澳历史最悠久、人口最多、经济最发达的州。 新州在发展对华关系方面长期走在澳各州区前列。 近年来，中国连续多年保持新州最大贸易伙伴地位， 新州吸引了近半数中国对澳投资、约六成中国游客和超过三成中国留学生。',
-      link: 'http://sydney.china-consulate.gov.cn/',
+      name: 'USU',
+      logoUrl: 'lib/assets/官方合作/university-of-sydney-union 1.png',
+      description: '悉尼大学学生工会 (University of Sydney Union) 成立于1874年， 是一个为尊重学生的多元讨论而设立的社团，是澳大利亚最大的、独立的学生组织。 USU以非盈利为荣，提供广泛的服务、活动、项目、设施和机会，帮助每个学生充分利用他们在大学的时间。 除了支持200多个学生社团外，USU还负责在讲座和考试之外提供许多有趣的活动项目， 包括大型节日、派对、演出和大量以学生为中心的活动， 以及学生志愿者计划、学生领导和带薪工作机会。 USU还通过校内的咖啡馆、商店和官网提供餐饮和正版学校周边商品。',
+      link: 'https://usu.edu.au/',
     ),
   ];
 

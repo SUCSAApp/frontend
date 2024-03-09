@@ -3,6 +3,7 @@ import 'package:date_time_picker/date_time_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:sucsa_app/main.dart';
 
@@ -47,9 +48,9 @@ class Activity {
 
 class AttendanceRecordPageState extends State<AttendanceRecordPage> {
 
-  bool runFutureBuilder = true;  //控制UI是否刷新
+  bool runFutureBuilder = true;
 
-  String token = getToken();
+
 
   String? department;
 
@@ -93,7 +94,7 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
     {"id": 14, "name": "2024年S2学期"},];
 
   List<int> creditList = List<int>.generate(30, (i) => i);
-  
+
   String? activityName;
 
   String? activityDate;
@@ -118,23 +119,23 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
               borderRadius: BorderRadius.circular(50),
             ),
             child: DropdownButton(
-            dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-            value: semester, style: const TextStyle(fontSize: 15, color: Colors.black),
-            hint: const Text("选择学期", style: TextStyle(fontSize: 15),),
-            isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down),
-            items: semesterList.map((items) { 
-                return DropdownMenuItem( 
-                  value: items["name"].toString(), 
-                  child: Text(items["name"]), 
-                ); 
+              dropdownColor: const Color.fromARGB(255, 220, 217, 217),
+              value: semester, style: const TextStyle(fontSize: 15, color: Colors.black),
+              hint: const Text("选择学期", style: TextStyle(fontSize: 15),),
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down),
+              items: semesterList.map((items) {
+                return DropdownMenuItem(
+                  value: items["name"].toString(),
+                  child: Text(items["name"]),
+                );
               }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                semester = newValue!;
-                runFutureBuilder = true;
-              });
-            },),
+              onChanged: (String? newValue) {
+                setState(() {
+                  semester = newValue!;
+                  runFutureBuilder = true;
+                });
+              },),
           ),
 
           Container(
@@ -145,23 +146,23 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
               borderRadius: BorderRadius.circular(50),
             ),
             child: DropdownButton(
-            dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-            value: department, style: const TextStyle(fontSize: 15, color: Colors.black),
-            hint: const Text("选择部门", style: TextStyle(fontSize: 15),),
-            isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down),
-            items: departmentList.map((items) { 
-                return DropdownMenuItem( 
-                  value: items["id"].toString(), 
-                  child: Text(items["name"]), 
-                ); 
+              dropdownColor: const Color.fromARGB(255, 220, 217, 217),
+              value: department, style: const TextStyle(fontSize: 15, color: Colors.black),
+              hint: const Text("选择部门", style: TextStyle(fontSize: 15),),
+              isExpanded: true,
+              icon: const Icon(Icons.keyboard_arrow_down),
+              items: departmentList.map((items) {
+                return DropdownMenuItem(
+                  value: items["id"].toString(),
+                  child: Text(items["name"]),
+                );
               }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                department = newValue!;
-                runFutureBuilder = true;
-              });
-            },),
+              onChanged: (String? newValue) {
+                setState(() {
+                  department = newValue!;
+                  runFutureBuilder = true;
+                });
+              },),
           )
         ],
       ),
@@ -237,7 +238,7 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
     );
   }
 
-  
+
 
   Widget outsideActivityButton(){
     return Container(
@@ -304,7 +305,7 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
     if(department == null || semester == null){
       return Container();
     }
-    
+
     if(isInternal){
       return FutureBuilder<List<Activity>>(
         future: runFutureBuilder? getInternalActivity() : null,
@@ -318,89 +319,89 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
             itemCount: insideActivityList.length,
             itemBuilder: (context, index) {
               return Container(
-                margin: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey,
-                      blurRadius: 10.0,
-                      offset: Offset(0.0, 1.0),
-                    ),
-                  ],
-                ),
-                child: Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 50,
-                              child: CheckboxListTile(
-                                side: MaterialStateBorderSide.resolveWith((states) => const BorderSide(width: 1.0, color: Colors.black)),
-                                checkColor: Colors.blue,
-                                title: Text("活动名：${insideActivityList[index].activityName}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
-                                value: insideActivityList[index].selected,
-                                onChanged: (value) {
-                                  setState(() {
-                                    runFutureBuilder = false;
-                                    insideActivityList[index].selected = value!;
-                                  });
-                                },
-                              ),
-                            ),
-                          )
-                        ],
+                  margin: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey,
+                        blurRadius: 10.0,
+                        offset: Offset(0.0, 1.0),
                       ),
-                      GridView.count(
-                        crossAxisCount: 2,
-                        padding: const EdgeInsets.all(10),
-                        childAspectRatio: (1 / 0.2),
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        shrinkWrap: true,
-                        children: [
-                          for(int i = 0; i < insideActivityList[index].userList.length; i ++)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Text(insideActivityList[index].userList[i].userName, style: const TextStyle(fontSize: 15),),
-                                Container(
-                                  width: 100,
-                                  padding: const EdgeInsets.only(left: 45, right: 10),
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(255, 220, 217, 217),
-                                    borderRadius: BorderRadius.circular(50),
-                                  ),
-                                  child: DropdownButton(
-                                    dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-                                    value: insideActivityList[index].userList[i].score, style: const TextStyle(fontSize: 15, color: Colors.black),
-                                    isExpanded: true,
-                                    icon: const Icon(Icons.keyboard_arrow_down),
-                                    items: creditList.map((items) { 
-                                        return DropdownMenuItem( 
-                                          value: items, 
-                                          child: Text(items.toString()), 
-                                        ); 
-                                      }).toList(),
-                                    onChanged: (int? value) {
-                                      setState(() {
-                                        runFutureBuilder = false;
-                                        insideActivityList[index].userList[i].score = value!;
-                                        updateCredit(insideActivityList[index].activityId, insideActivityList[index].userList[i].userId, insideActivityList[index].userList[i].score);
-                                      });
-                                    },
-                                  )
-                                )
-                              ],
-                            ),
-                        ],
-                      )
                     ],
                   ),
-                )
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 50,
+                                child: CheckboxListTile(
+                                  side: MaterialStateBorderSide.resolveWith((states) => const BorderSide(width: 1.0, color: Colors.black)),
+                                  checkColor: Colors.blue,
+                                  title: Text("活动名：${insideActivityList[index].activityName}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
+                                  value: insideActivityList[index].selected,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      runFutureBuilder = false;
+                                      insideActivityList[index].selected = value!;
+                                    });
+                                  },
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          padding: const EdgeInsets.all(10),
+                          childAspectRatio: (1 / 0.2),
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          shrinkWrap: true,
+                          children: [
+                            for(int i = 0; i < insideActivityList[index].userList.length; i ++)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Text(insideActivityList[index].userList[i].userName, style: const TextStyle(fontSize: 15),),
+                                  Container(
+                                      width: 100,
+                                      padding: const EdgeInsets.only(left: 45, right: 10),
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(255, 220, 217, 217),
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: DropdownButton(
+                                        dropdownColor: const Color.fromARGB(255, 220, 217, 217),
+                                        value: insideActivityList[index].userList[i].score, style: const TextStyle(fontSize: 15, color: Colors.black),
+                                        isExpanded: true,
+                                        icon: const Icon(Icons.keyboard_arrow_down),
+                                        items: creditList.map((items) {
+                                          return DropdownMenuItem(
+                                            value: items,
+                                            child: Text(items.toString()),
+                                          );
+                                        }).toList(),
+                                        onChanged: (int? value) {
+                                          setState(() {
+                                            runFutureBuilder = false;
+                                            insideActivityList[index].userList[i].score = value!;
+                                            updateCredit(insideActivityList[index].activityId, insideActivityList[index].userList[i].userId, insideActivityList[index].userList[i].score);
+                                          });
+                                        },
+                                      )
+                                  )
+                                ],
+                              ),
+                          ],
+                        )
+                      ],
+                    ),
+                  )
               );
             },
           );
@@ -419,89 +420,89 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
             itemCount: outsideActivityList.length,
             itemBuilder: (context, index) {
               return Container(
-                margin: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey,
-                      blurRadius: 10.0,
-                      offset: Offset(0.0, 1.0),
-                    ),
-                  ],
-                ),
-                child: Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 50,
-                              child: CheckboxListTile(
-                                side: MaterialStateBorderSide.resolveWith((states) => const BorderSide(width: 1.0, color: Colors.black)),
-                                checkColor: Colors.blue,
-                                title: Text("活动名：${outsideActivityList[index].activityName}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
-                                value: outsideActivityList[index].selected,
-                                onChanged: (value) {
-                                  setState(() {
-                                    runFutureBuilder = false;
-                                    outsideActivityList[index].selected = value!;          
-                                  });
-                                },
-                              ),
-                            ),
-                          )
-                        ],
+                  margin: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey,
+                        blurRadius: 10.0,
+                        offset: Offset(0.0, 1.0),
                       ),
-                      GridView.count(
-                        crossAxisCount: 2,
-                        padding: const EdgeInsets.all(10),
-                        childAspectRatio: (1 / 0.2),
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        shrinkWrap: true,
-                        children: [
-                          for(int i = 0; i < outsideActivityList[index].userList.length; i ++)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Text(outsideActivityList[index].userList[i].userName, style: const TextStyle(fontSize: 15),),
-                                Container(
-                                  width: 100,
-                                  padding: const EdgeInsets.only(left: 45, right: 10),
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(255, 220, 217, 217),
-                                    borderRadius: BorderRadius.circular(50),
-                                  ),
-                                  child: DropdownButton(
-                                    dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-                                    value: outsideActivityList[index].userList[i].score, style: const TextStyle(fontSize: 15, color: Colors.black),
-                                    isExpanded: true,
-                                    icon: const Icon(Icons.keyboard_arrow_down),
-                                    items: creditList.map((items) { 
-                                        return DropdownMenuItem( 
-                                          value: items, 
-                                          child: Text(items.toString()), 
-                                        ); 
-                                      }).toList(),
-                                    onChanged: (int? value) {
-                                      setState(() {
-                                        runFutureBuilder = false;
-                                        outsideActivityList[index].userList[i].score = value!;
-                                        updateCredit(outsideActivityList[index].activityId, outsideActivityList[index].userList[i].userId, outsideActivityList[index].userList[i].score);
-                                      });
-                                    },
-                                  )
-                                )
-                              ],
-                            ),
-                        ],
-                      )
                     ],
                   ),
-                )
+                  child: Card(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 50,
+                                child: CheckboxListTile(
+                                  side: MaterialStateBorderSide.resolveWith((states) => const BorderSide(width: 1.0, color: Colors.black)),
+                                  checkColor: Colors.blue,
+                                  title: Text("活动名：${outsideActivityList[index].activityName}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
+                                  value: outsideActivityList[index].selected,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      runFutureBuilder = false;
+                                      outsideActivityList[index].selected = value!;
+                                    });
+                                  },
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          padding: const EdgeInsets.all(10),
+                          childAspectRatio: (1 / 0.2),
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          shrinkWrap: true,
+                          children: [
+                            for(int i = 0; i < outsideActivityList[index].userList.length; i ++)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Text(outsideActivityList[index].userList[i].userName, style: const TextStyle(fontSize: 15),),
+                                  Container(
+                                      width: 100,
+                                      padding: const EdgeInsets.only(left: 45, right: 10),
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(255, 220, 217, 217),
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: DropdownButton(
+                                        dropdownColor: const Color.fromARGB(255, 220, 217, 217),
+                                        value: outsideActivityList[index].userList[i].score, style: const TextStyle(fontSize: 15, color: Colors.black),
+                                        isExpanded: true,
+                                        icon: const Icon(Icons.keyboard_arrow_down),
+                                        items: creditList.map((items) {
+                                          return DropdownMenuItem(
+                                            value: items,
+                                            child: Text(items.toString()),
+                                          );
+                                        }).toList(),
+                                        onChanged: (int? value) {
+                                          setState(() {
+                                            runFutureBuilder = false;
+                                            outsideActivityList[index].userList[i].score = value!;
+                                            updateCredit(outsideActivityList[index].activityId, outsideActivityList[index].userList[i].userId, outsideActivityList[index].userList[i].score);
+                                          });
+                                        },
+                                      )
+                                  )
+                                ],
+                              ),
+                          ],
+                        )
+                      ],
+                    ),
+                  )
               );
             },
           );
@@ -534,14 +535,14 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
-        title: const Text(
-          "考勤记录",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        )
+          backgroundColor: const Color.fromRGBO(29, 32, 136, 1.0),
+          title: const Text(
+            "考勤记录",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          )
       ),
       body: Center(
         child: ListView(
@@ -585,10 +586,10 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
     return Container(
       margin: const EdgeInsets.all(10),
       child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
             width: 200,
             padding: const EdgeInsets.only(left: 20),
             decoration: BoxDecoration(
@@ -605,8 +606,8 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
               ),
             ),
           )
-      ],
-    ),
+        ],
+      ),
     );
   }
 
@@ -614,10 +615,10 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
     return Container(
       margin: const EdgeInsets.all(10),
       child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
-        Container(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
             width: 200,
             padding: const EdgeInsets.only(left: 20),
             decoration: BoxDecoration(
@@ -678,7 +679,7 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
               }
             },),
         ),
-    
+
         Container(
           width: 100,
           decoration: BoxDecoration(
@@ -694,67 +695,90 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
               Navigator.of(context).pop();
             },),
         ),
-    
+
       ],
     );
   }
 
   Future<void> createInternalActivity() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    if (token == null) {
+      print("Token not found. User might not be logged in.");
+      return;
+    }
     String url = "http://cms.sucsa.org:8005/api/department/createActivity";
     final response = await http.post(Uri.parse(url), headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",},
-      body: jsonEncode(<String, dynamic>{
-        "departmentId": int.parse(department!),
-        "semester": semester,
-        "activityName": activityName,
-        "activityDate": DateTime.parse("$activityDate 00:00:00+0800").toIso8601String(),
-      }));
+        body: jsonEncode(<String, dynamic>{
+          "departmentId": int.parse(department!),
+          "semester": semester,
+          "activityName": activityName,
+          "activityDate": DateTime.parse("$activityDate 00:00:00+0800").toIso8601String(),
+        }));
 
-      print(response.body);
+    print(response.body);
   }
 
   Future<void> createExternalActivity() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    if (token == null) {
+      print("Token not found. User might not be logged in.");
+      return;
+    }
     String url = "http://cms.sucsa.org:8005/api/department/createOutActivity";
     final response = await http.post(Uri.parse(url), headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",},
-      body: jsonEncode(<String, dynamic>{
-        "departmentId": int.parse(department!),
-        "semester": semester,
-        "activityName": activityName,
-        "activityDate": DateTime.parse("${activityDate!.substring(0,10)} 00:00:00+1000").toIso8601String(),
-      }));
+        body: jsonEncode(<String, dynamic>{
+          "departmentId": int.parse(department!),
+          "semester": semester,
+          "activityName": activityName,
+          "activityDate": DateTime.parse("${activityDate!.substring(0,10)} 00:00:00+1000").toIso8601String(),
+        }));
 
-      print(response.body);
+    print(response.body);
   }
 
   Future<void> updateActivity() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    if (token == null) {
+      print("Token not found. User might not be logged in.");
+      return;
+    }
     String url = "http://cms.sucsa.org:8005/api/department/updateActivity";
     final response = await http.post(Uri.parse(url), headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",},
-      body: jsonEncode(<String, dynamic>{
-        "id": updatedActivity!.activityId,
-        "activityName": updatedActivity!.activityName,
-        "activityDate": DateTime.parse("${updatedActivity!.activityDate.substring(0,10)} 00:00:00+1000").toIso8601String(),
-      }));
+        body: jsonEncode(<String, dynamic>{
+          "id": updatedActivity!.activityId,
+          "activityName": updatedActivity!.activityName,
+          "activityDate": DateTime.parse("${updatedActivity!.activityDate.substring(0,10)} 00:00:00+1000").toIso8601String(),
+        }));
 
-      print(response.body);
+    print(response.body);
   }
 
   Future<List<Activity>> getInternalActivity() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    if (token == null) {
+      print("Token not found. User might not be logged in.");
+    }
     var uri = "http://cms.sucsa.org:8005/api/department/searchActivity?departmentId=$department&semester=$semester";
     var encoded = Uri.encodeFull(uri);
     final response = await http.get(Uri.parse(encoded), headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",},
-      );
-    
+    );
+
     List<dynamic> message = json.decode(utf8.decode(response.bodyBytes))['result'];
 
     List<Activity> result = [];
@@ -791,14 +815,19 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
   }
 
   Future<List<Activity>> getExternalActivity() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    if (token == null) {
+      print("Token not found. User might not be logged in.");
+    }
     var uri = "http://cms.sucsa.org:8005/api/department/searchOutActivity?departmentId=$department&semester=$semester";
     var encoded = Uri.encodeFull(uri);
     final response = await http.get(Uri.parse(encoded), headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",},
-      );
-    
+    );
+
     List<dynamic> message = json.decode(utf8.decode(response.bodyBytes))['result'];
 
     List<Activity> result = [];
@@ -834,16 +863,22 @@ class AttendanceRecordPageState extends State<AttendanceRecordPage> {
   }
 
   Future<void> updateCredit(int activityId, int userId, int score) async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+    if (token == null) {
+      print("Token not found. User might not be logged in.");
+      return;
+    }
     String url = "http://cms.sucsa.org:8005/api/department/updateCredit";
     final response = await http.post(Uri.parse(url), headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
       "Authorization": "Bearer $token",},
-      body: jsonEncode(<String, dynamic>{
-        "activityId": activityId,
-        "userId": userId,
-        "value": score,
-      }));
+        body: jsonEncode(<String, dynamic>{
+          "activityId": activityId,
+          "userId": userId,
+          "value": score,
+        }));
   }
 
 
