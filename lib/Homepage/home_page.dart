@@ -192,8 +192,15 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     bottom: 0,
                     right: 5,
-                    child: IconButton(onPressed: () {_launchUrl(Uri.parse(url));}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
+                    child: ElevatedButton(
+                      onPressed: () => _launchUrl(Uri.parse(url)),
+                      child: Text('查看详情'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white, backgroundColor: Color.fromRGBO(29,32,136,1.0), // Text color
+                      ),
+                    ),
                   )
+
 
                 ],
               ),
@@ -249,7 +256,13 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     bottom: 0,
                     right: 5,
-                    child: IconButton(onPressed: () {_launchUrl(Uri.parse(url));}, icon: Image.asset('lib/assets/查看详情.png', height: 25, fit: BoxFit.fill,)),
+                    child: ElevatedButton(
+                      onPressed: () => _launchUrl(Uri.parse(url)),
+                      child: Text('查看详情'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white, backgroundColor: Color.fromRGBO(29,32,136,1.0), // Text color
+                      ),
+                    ),
                   )
 
                 ],

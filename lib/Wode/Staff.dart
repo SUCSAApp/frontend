@@ -26,6 +26,8 @@ class StaffPage extends StatefulWidget {
 
 class _StaffPageState extends State<StaffPage> {
   bool hasNewWarehouseRequest = false;
+  String username = '';
+  List<String> roles = [];
 
 
   void navigateTo(BuildContext context, Widget page) {
@@ -43,8 +45,8 @@ class _StaffPageState extends State<StaffPage> {
   void initState() {
     super.initState();
     checkForNewRequests();
+    getUsername();
   }
-
 
   void _showSettingsBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -76,8 +78,29 @@ class _StaffPageState extends State<StaffPage> {
     });
   }
 
+  void getUsername() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? storedUsername = prefs.getString('username');
+    final String? storedRoles = prefs.getString('roles');
 
-
+    if (storedUsername != null) {
+      try {
+        // Decode the username from Latin-1 to UTF-8.
+        final String decodedUsername = utf8.decode(latin1.encode(storedUsername));
+        setState(() {
+          username = decodedUsername;
+          roles = storedRoles != null ? List<String>.from(jsonDecode(storedRoles)) : [];
+        });
+      } catch (e) {
+        // If decoding fails, fall back to the original string.
+        setState(() {
+          username = storedUsername;
+          roles = storedRoles != null ? List<String>.from(jsonDecode(storedRoles)) : [];
+        });
+        print('Error decoding username: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +110,18 @@ class _StaffPageState extends State<StaffPage> {
           children: <Widget>[
             Image.asset('lib/assets/membercard.png', width: double.infinity),
             const SizedBox(height: 2),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                '$username\'s 工作台',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: Color.fromRGBO(29, 32, 136, 1.0),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
             Card(
               margin: const EdgeInsets.all(8.0),
               child: Padding(
@@ -94,38 +129,61 @@ class _StaffPageState extends State<StaffPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Section(
-                      title: '考勤管理',
-                      icons: [Icons.history, Icons.people],
-                      labels: ['考勤记录', '人员管理'],
-                      onTapCallbacks: [
-                            () => navigateTo(context, AttendanceRecordPage()),
-                            () => navigateTo(context, PersonnelManagementPage()),
-                      ],
-                    ),
-                    const Divider(),
+                    if (roles.contains('superAdmin') || roles.contains('admin')) // Add this condition
+                      Section(
+                        title: '考勤管理',
+                        icons: [Icons.history, Icons.people],
+                        labels: ['考勤记录', '人员管理'],
+                        onTapCallbacks: [
+                              () => navigateTo(context, AttendanceRecordPage()),
+                              () => navigateTo(context, PersonnelManagementPage()),
+                        ],
+                      ),
+                    if (roles.contains('superAdmin') || roles.contains('admin')) // Add this condition
+                      const Divider(),
                     Section(
                       title: '学联仓库',
-                      icons: [Icons.car_rental, Icons.inventory, FontAwesomeIcons.file, FontAwesomeIcons.box],
-                      labels: ['仓库审批', '申请取货', '物品归还', '物品管理'],
+                      icons: [
+                        if (roles.contains('superAdmin') || roles.contains('WAREHOUSE_MANAGER')) Icons.car_rental,
+                        Icons.inventory,
+                        FontAwesomeIcons.file,
+                        if (roles.contains('superAdmin') || roles.contains('WAREHOUSE_MANAGER')) FontAwesomeIcons.box,
+                      ],
+                      labels: [
+                        if (roles.contains('superAdmin') || roles.contains('WAREHOUSE_MANAGER')) '仓库审批',
+                        '申请取货',
+                        '物品归还',
+                        if (roles.contains('superAdmin') || roles.contains('WAREHOUSE_MANAGER')) '物品管理',
+                      ],
                       onTapCallbacks: [
-                            () => navigateTo(context, WarehouseapprovePage()),
+                        if (roles.contains('superAdmin') || roles.contains('WAREHOUSE_MANAGER'))
+                              () => navigateTo(context, WarehouseapprovePage()),
                             () => navigateTo(context, PickupRequestPage()),
                             () => navigateTo(context, ReturnRequestPage()),
-                            () => navigateTo(context, ProductManagePage()),
+                        if (roles.contains('superAdmin') || roles.contains('WAREHOUSE_MANAGER')) () => navigateTo(context, ProductManagePage()),
                       ],
                       hasNewRequest: hasNewWarehouseRequest,
                     ),
-                    const Divider(),
-                    Section(
-                      title: '报销',
-                      icons: [FontAwesomeIcons.stamp, Icons.file_copy],
-                      labels: ['报销审批', '申请报销'],
-                      onTapCallbacks: [
-                            () => navigateTo(context, ReimbursementApprovalPage()),
-                            () => navigateTo(context, ReimbursementRequestPage()),
-                      ],
-                    ),
+                    if (roles.contains('superAdmin') || roles.contains('admin') || roles.contains('EXPENSE_MANAGER') || roles.contains('WAREHOUSE_MANAGER') || roles.isEmpty) // Add this condition
+                      const Divider(),
+                    if (roles.contains('superAdmin') || roles.contains('admin') || roles.contains('EXPENSE_MANAGER') || roles.contains('WAREHOUSE_MANAGER') || roles.isEmpty) // Add this condition
+                      Section(
+                        title: '报销',
+                        icons: [
+                          if (roles.contains('superAdmin') || roles.contains('EXPENSE_MANAGER')) FontAwesomeIcons.stamp,
+                          if (roles.contains('superAdmin') || roles.contains('admin') || roles.contains('EXPENSE_MANAGER') || roles.contains('WAREHOUSE_MANAGER') || roles.isEmpty) Icons.file_copy,
+                        ],
+                        labels: [
+                          if (roles.contains('superAdmin') || roles.contains('EXPENSE_MANAGER')) '报销审批',
+                          if (roles.contains('superAdmin') || roles.contains('admin') || roles.contains('EXPENSE_MANAGER') || roles.contains('WAREHOUSE_MANAGER') || roles.isEmpty) '申请报销',
+                        ],
+                        onTapCallbacks: [
+                          if (roles.contains('superAdmin') || roles.contains('EXPENSE_MANAGER'))
+                                () => navigateTo(context, ReimbursementApprovalPage()),
+                          if (roles.contains('superAdmin') || roles.contains('admin') || roles.contains('EXPENSE_MANAGER') || roles.contains('WAREHOUSE_MANAGER') || roles.isEmpty)
+                                () => navigateTo(context, ReimbursementRequestPage()),
+                        ],
+                      ),
                   ],
                 ),
               ),

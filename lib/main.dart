@@ -70,18 +70,102 @@ class _LoginPageState extends State<LoginPage> {
 
   void _loadCredentials() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    _staffUsernameController.text = prefs.getString('staffUsername') ?? '';
-    _studentIdController.text = prefs.getString('studentId') ?? '';
+    int? staffLoginTimestamp = prefs.getInt('staffLoginTimestamp');
+    int? studentLoginTimestamp = prefs.getInt('studentLoginTimestamp');
+
+    if (staffLoginTimestamp != null) {
+      int currentTime = DateTime.now().millisecondsSinceEpoch;
+      if (currentTime - staffLoginTimestamp > 30 * 24 * 60 * 60 * 1000) {
+        await prefs.remove('staffUsername');
+        await prefs.remove('staffLoginTimestamp');
+      }
+      else {
+        _staffUsernameController.text = prefs.getString('staffUsername') ?? '';
+      }
+    }
+
+    if (studentLoginTimestamp != null) {
+      int currentTime = DateTime.now().millisecondsSinceEpoch;
+      if (currentTime - studentLoginTimestamp > 30 * 24 * 60 * 60 * 1000) {
+        await prefs.remove('studentId');
+        await prefs.remove('studentLoginTimestamp');
+
+      } else {
+        _studentIdController.text = prefs.getString('studentId') ?? '';
+      }
+    }
   }
 
-  void _saveCredentials(bool isStaffLogin, String token) async {
+  void _setExpenseManagers() async {
+    final List<int> userIds = [149, 147];
+
+    for (int userId in userIds) {
+      final url = 'http://cms.sucsa.org:8005/api/user/$userId/set-expense-manager';
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+
+      try {
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer $token",
+          },
+        );
+
+        if (response.statusCode == 200) {
+          print('User $userId set as expense manager successfully.');
+        } else {
+          print('Failed to set user $userId as expense manager. Status code: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Error setting user $userId as expense manager: $e');
+      }
+    }
+  }
+
+  void _setWareHouseManagers() async {
+    final List<int> userIds = [51, 15];
+
+    for (int userId in userIds) {
+      final url = 'http://cms.sucsa.org:8005/api/user/$userId/set-warehouse-manager'
+      ;
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('token');
+
+      try {
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer $token",
+          },
+          body: jsonEncode({"userId": userId}),
+        );
+
+        if (response.statusCode == 200) {
+          print('User $userId set as warehouse manager successfully.');
+        } else {
+          print('Failed to set user $userId as warehouse manager. Status code: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Error setting user $userId as warehouse manager: $e');
+      }
+    }
+  }
+
+  void _saveCredentials(bool isStaffLogin, String token, String userType) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
+    await prefs.setString('userType', userType);
     if (isStaffLogin && _isRememberMeStaff) {
-      prefs.setString('staffUsername', _staffUsernameController.text);
-      print('staffUsername: ${_staffUsernameController.text}');
+      await prefs.setString('staffUsername', _staffUsernameController.text);
+      await prefs.setInt('staffLoginTimestamp', DateTime.now().millisecondsSinceEpoch);
     } else if (!isStaffLogin && _isRememberMeStudent) {
-      prefs.setString('studentId', _studentIdController.text);
+      await prefs.setString('studentId', _studentIdController.text);
+      await prefs.setInt('studentLoginTimestamp', DateTime.now().millisecondsSinceEpoch);
     }
   }
 
@@ -133,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                       cursorWidth: 2.0,
                     ),
                 CheckboxListTile(
-                  title: Text('记住账号'),
+                  title: Text('Stay Sign in for 30 days', style: TextStyle(fontSize: 11),),
                   value: localIsRememberMe,
                   onChanged: (bool? value) {
                     setState(() {
@@ -143,7 +227,7 @@ class _LoginPageState extends State<LoginPage> {
                       } else {
                         _isRememberMeStudent = value;
                       }
-                      _saveCredentials(isStaffLogin, '');
+                      _saveCredentials(isStaffLogin, '', '');
                     });
                   },
                   checkColor: Colors.white,
@@ -176,7 +260,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-
   void _handleStaffLogin() async {
     try {
       final result = await _apiService.staffLogin(
@@ -187,17 +270,23 @@ class _LoginPageState extends State<LoginPage> {
         String token = result['result']['token'];
         String username = result['result']['username'];
         List<dynamic> roles = result['result']['roles'];
-        _saveCredentials(true, token);
+        _saveCredentials(true, token, 'staff');
+
 
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setString('username', username);
         await prefs.setString('roles', jsonEncode(roles));
+        await _apiService.saveToken(token, token);
+
+        _setWareHouseManagers();
+        _setExpenseManagers();
+        print('username: $username');
+        print('Roles: $roles');
         navigatorKey.currentState!.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomePage()),
               (Route<dynamic> route) => false,
         );
-        print('roles: $roles');
       } else {
         _showErrorDialog('Invalid staff credentials.');
       }
@@ -205,7 +294,6 @@ class _LoginPageState extends State<LoginPage> {
       _showErrorDialog('Login failed. Please try again.');
     }
   }
-
 
   void _handleStudentLogin() async {
     try {
@@ -218,7 +306,10 @@ class _LoginPageState extends State<LoginPage> {
         String username = result['result']['username'];
         String userType = result['result']['user_type'];
 
-        _saveCredentials(true, token);
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userType', userType);
+        _saveCredentials(false, token, 'student');
+
         navigatorKey.currentState!.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomePage()),
               (Route<dynamic> route) => false,
@@ -250,6 +341,8 @@ class _LoginPageState extends State<LoginPage> {
       },
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {

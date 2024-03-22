@@ -69,8 +69,8 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
 
       setState(() {
         apiItems = fetchedItems.map((item) => {
-          'name': item['itemName'] ?? 'Unnamed Item',
           'id': item['itemId'] ?? 0,
+          'name': item['itemName'] ?? 'Unnamed Item',
           'stockQuantity': item['stockQuantity'] ?? 0,
         }).toList();
       });
@@ -158,10 +158,7 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
 
     final returnItemRequests = _items.map((item) {
       return {
-        "item": {
-          "itemId": item['id'],
-          "itemName": item['name'],
-        },
+        "item": {"itemId": item['id']},
         "requestedQuantity": item['quantity'],
       };
     }).toList();
@@ -172,12 +169,12 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
       "activityDate": _eventDateController.text,
       "requesterName": _applicantNameController.text,
       "returnDate": _returnDateController.text,
+      "status": "PENDING",
     };
 
     final body = json.encode(requestBody);
 
     print(requestBody);
-
 
     try {
       final response = await http.post(url, headers: headers, body: body);
@@ -376,7 +373,6 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
             _items[index]['id'] = selectedItem['id'];
           });
         }
-
       } else {
         showDialog<void>(
           context: context,
@@ -397,9 +393,6 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
         );
       }
     }
-
-
-
 
     return Column(
       children: [
@@ -443,7 +436,5 @@ class _ReturnRequestPageState extends State<ReturnRequestPage> {
       ],
     );
   }
-
-
 
 }

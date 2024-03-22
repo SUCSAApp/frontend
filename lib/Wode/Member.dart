@@ -6,8 +6,7 @@ class MemberPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SUCSA',
-
+      title: '我的',
       theme: ThemeData(
         colorScheme: ColorScheme.light(primary: Colors.white),
         useMaterial3: true,

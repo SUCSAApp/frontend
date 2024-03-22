@@ -41,4 +41,42 @@ class ApiService {
   }
 
 
+  Future<void> saveToken(String token, String authToken) async {
+    final url = 'http://cms.sucsa.org:8005/api/user/save_token';
+    final response = await http.post(
+      Uri.parse(url),
+      body: jsonEncode({'token': token}),
+      headers: {
+        'Authorization': 'Bearer $authToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Token saved successfully');
+    } else {
+      print('Failed to save token. Status code: ${response.statusCode}');
+      throw Exception('Failed to save token');
+    }
+  }
+
+  Future<void> sendNotification(String title, String body, int userId) async {
+    final url = 'http://cms.sucsa.org:8005/api/notification/send';
+    final response = await http.post(
+      Uri.parse(url),
+      body: {
+        'title': title,
+        'body': body,
+        'userId': userId.toString(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Notification sent successfully');
+    } else {
+      print('Failed to send notification. Status code: ${response.statusCode}');
+      throw Exception('Failed to send notification');
+    }
+  }
+
 }

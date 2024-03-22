@@ -11,9 +11,10 @@ class ReimbursementRequestPage extends StatefulWidget {
   _ReimbursementRequestPageState createState() => _ReimbursementRequestPageState();
 }
 
-
-
 class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
+
+  List<String> invoiceImagePaths = [];
+  List<String> screenshotImagePaths = [];
 
   List departmentList = [
     {"id": 1, "name": "行政部"},
@@ -40,12 +41,11 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
   final TextEditingController _departmentController = TextEditingController();
   final TextEditingController _currencyController = TextEditingController();
   final TextEditingController _totalAmountController = TextEditingController();
-  final List<Map<String, dynamic>> _espenseitem = [];
+  final List<Map<String, dynamic>> _expenseItems = [];
   final TextEditingController _expenseMethodController = TextEditingController();
   final TextEditingController _accountNameController = TextEditingController();
   final TextEditingController _bsbController = TextEditingController();
   final TextEditingController _accountNumberController = TextEditingController();
-
 
   String? selectedDepartment;
   String? selectedCurrency;
@@ -56,7 +56,6 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
   String? departmentName;
   List<String> invoiceFileNames = [];
   List<String> screenshotFileNames = [];
-
 
   @override
   void initState() {
@@ -72,6 +71,25 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
     _bsbController;
     _accountNumberController;
     loadUsername();
+  }
+
+  @override
+  void dispose() {
+    _applicantController.dispose();
+    _departmentController.dispose();
+    _eventNameController.dispose();
+    _eventDateController.dispose();
+    _currencyController.dispose();
+    _totalAmountController.dispose();
+    _expenseMethodController.dispose();
+    _accountNameController.dispose();
+    _bsbController.dispose();
+    _accountNumberController.dispose();
+    _expenseItems.forEach((item) {
+      item['nameController'].dispose();
+      item['amountController'].dispose();
+    });
+    super.dispose();
   }
 
   void loadUsername() async {
@@ -120,7 +138,7 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
       "name": departmentList.firstWhere((dept) => dept['id'].toString() == selectedDepartment)['name'],
     };
 
-    double totalAmount = _espenseitem.fold(0.0, (sum, item) => sum + (item['amount'] as double));
+    double totalAmount = _expenseItems.fold(0.0, (sum, item) => sum + (item['amount'] as double));
 
 
     Map<String, dynamic> requestData = {
@@ -129,11 +147,21 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
       "eventDate": _eventDateController.text,
       "applicant": _applicantController.text,
       "currency": selectedCurrency,
-      "expenseItems": _espenseitem,
+      "expenseItems": _expenseItems.map((item) {
+        // Only include the text values, not the controllers
+        return {
+          "item": item['nameController'].text,
+          "amount": double.tryParse(item['amountController'].text) ?? 0.00,
+        };
+      }).toList(),
       "invoices": invoiceFileNames,
       "screenshots": screenshotFileNames,
       "reimbursementMethod": selectedCurrency,
       "amount": totalAmount,
+      "accountName": _accountNameController.text,
+      "bsb": _bsbController.text,
+      "accountNumber": _accountNumberController.text,
+      "status": "PENDING",
     };
 
 
@@ -165,10 +193,25 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseBody = json.decode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reimbursement request submitted successfully')),
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('提示', style: TextStyle(color: Color.fromRGBO(29,32,136,1.0), fontWeight: FontWeight.bold)),
+              content: Text('报销申请提交成功', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('确定', style: TextStyle(color: Color.fromRGBO(29,32,136,1.0), fontWeight: FontWeight.bold)),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
         );
-        print('Reimbursement request submitted successfully: $responseBody');
+        _formKey.currentState!.reset();
 
       } else {
         print('Failed to submit request: ${response.statusCode}' + response.body);
@@ -261,7 +304,6 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
     }
   }
 
-
   Widget _buildStyledTextFieldWithLabel({
     required String label,
     required String hintText,
@@ -301,17 +343,19 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
 
   void _addExpenseItem() {
     setState(() {
-      _espenseitem.add({
-        "id": _espenseitem.length + 1,
-        "name": "",
-        "amount": 0.00
+      TextEditingController nameController = TextEditingController();
+      TextEditingController amountController = TextEditingController();
+      _expenseItems.add({
+        "id": _expenseItems.length + 1,
+        "nameController": nameController,
+        "amountController": amountController,
       });
     });
   }
 
-  Widget _buildExpenseItemField(int index) {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController amountController = TextEditingController();
+  Widget _buildExpenseItemField(Map<String, dynamic> item, int index) {
+    TextEditingController nameController = item['nameController'];
+    TextEditingController amountController = item['amountController'];
 
     return Row(
       children: [
@@ -320,7 +364,7 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
             controller: nameController,
             decoration: InputDecoration(hintText: '费用名称'),
             onChanged: (value) {
-              _espenseitem[index]['name'] = value;
+              item['name'] = value;
             },
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -337,7 +381,7 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
             keyboardType: TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(hintText: '金额'),
             onChanged: (value) {
-              _espenseitem[index]['amount'] = double.tryParse(value) ?? 0.00;
+              item['amount'] = double.tryParse(value) ?? 0.00;
             },
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -354,7 +398,9 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
           icon: Icon(Icons.delete),
           onPressed: () {
             setState(() {
-              _espenseitem.removeAt(index);
+              _expenseItems.remove(item);
+              item['nameController'].dispose();
+              item['amountController'].dispose();
             });
           },
         )
@@ -364,26 +410,28 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
 
   Future<void> _pickAndUploadImage(String type) async {
     final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    final List<XFile>? images = await _picker.pickMultiImage();
 
-    if (image != null) {
-      String? fileName = await uploadFile(File(image.path));
-      if (fileName != null) {
-        setState(() {
-          if (type == 'invoice') {
-            invoiceImagePath = image.path;
-            invoiceFileNames.add(fileName);
-          } else {
-            screenshotImagePath = image.path;
-            screenshotFileNames.add(fileName);
-          }
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image uploaded successfully')),
-        );
+    if (images != null && images.isNotEmpty) {
+      for (XFile image in images) {
+        String? fileName = await uploadFile(File(image.path));
+        if (fileName != null) {
+          setState(() {
+            if (type == 'invoice') {
+              invoiceImagePaths.add(image.path);
+              invoiceFileNames.add(fileName);
+            } else {
+              screenshotImagePaths.add(image.path);
+              screenshotFileNames.add(fileName);
+            }
+          });
+        }
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Images uploaded successfully')),
+      );
     } else {
-      print('No image was selected.');
+      print('No images were selected.');
     }
   }
 
@@ -462,7 +510,9 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
                 },
               ),
               SizedBox(height: 14),
-              ..._espenseitem.map((e) => _buildExpenseItemField(_espenseitem.indexOf(e))).toList(),
+              ..._expenseItems.asMap().entries.map((entry) {
+                return _buildExpenseItemField(entry.value, entry.key);
+              }).toList(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -484,13 +534,25 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (invoiceImagePath != null)
-                    _buildImagePreview(invoiceImagePath!, 'Invoice Preview'), // Adjusted for invoice
+                  if (invoiceImagePaths.isNotEmpty)
+                    Expanded(
+                      child: SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: invoiceImagePaths.length,
+                          itemBuilder: (context, index) {
+                            return _buildImagePreview(invoiceImagePaths[index], 'Invoice');
+                          },
+                        ),
+                      ),
+                    ),
                   ElevatedButton(
                     onPressed: () => _pickAndUploadImage('invoice'),
-                    child: Text('上传发票'),
+                    child: Text('上传Invoice'),
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
+                      foregroundColor: Colors.white,
+                      backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
                     ),
                   ),
                 ],
@@ -499,13 +561,25 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (screenshotImagePath != null)
-                    _buildImagePreview(screenshotImagePath!, 'Screenshot Preview'), // Adjusted for screenshot
+                  if (screenshotImagePaths.isNotEmpty)
+                    Expanded(
+                      child: SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: screenshotImagePaths.length,
+                          itemBuilder: (context, index) {
+                            return _buildImagePreview(screenshotImagePaths[index], 'Screenshot');
+                          },
+                        ),
+                      ),
+                    ),
                   ElevatedButton(
                     onPressed: () => _pickAndUploadImage('screenshot'),
                     child: Text('付款截图'),
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white, backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
+                      foregroundColor: Colors.white,
+                      backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
                     ),
                   ),
                 ],
@@ -638,7 +712,6 @@ class _ReimbursementRequestPageState extends State<ReimbursementRequestPage> {
       ],
     );
   }
-
 
   Widget _buildImagePreview(String? imagePath, String label) {
     return Row(

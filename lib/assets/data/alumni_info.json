@@ -1,16 +1,88 @@
 [
   {
     "name": "广州校友会",
-    "Contact": "联系人： ",
-    "phoneNumber": "电话：",
-    "Wechat": "微信：gloriahcn",
-    "officialAccount": "公众号："
+    "Contact": "联系人： gloria",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：gloriahcn"
   },
   {
     "name": "上海校友会",
     "Contact": "联系人： 秘书长 echo Xie",
-    "phoneNumber": "电话：",
-    "Wechat": "微信：15821320212",
-    "officialAccount": "公众号："
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：15821320212"
+  },
+  {
+    "name": "北京校友会",
+    "Contact": "联系人： Bu Dai",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：debs411"
+  },
+  {
+    "name": "深圳校友会",
+    "Contact": "联系人： Nick Xiao",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：Nickxiao2011"
+  },
+  {
+    "name": "成都校友会",
+    "Contact": "联系人： Yinming Wan",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：aiseeyou"
+  },
+  {
+    "name": "宁波校友会",
+    "Contact": "联系人： Cici Yang",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：kidkid88"
+  },
+  {
+    "name": "杭州校友会",
+    "Contact": "联系人： Kelvin",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：netiger"
+  },
+  {
+    "name": "湖北校友会",
+    "Contact": "联系人： 李竞➕Phoebe Li",
+    "phoneNumber": "电话：15717159589",
+    "Wechat": "联系人微信：420220233"
+  },
+  {
+    "name": "香港校友会",
+    "Contact": "联系人： Anne Lin 林福美",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：anne079144"
+  },
+  {
+    "name": "西安校友会",
+    "Contact": "联系人： 王杨 Hannah",
+    "phoneNumber": "电话：+86 13891897900",
+    "Wechat": "联系人微信：xxx"
+  },
+  {
+    "name": "沈阳校友会",
+    "Contact": "联系人： 李慕涵 Moony Li",
+    "phoneNumber": "电话：13897944638",
+    "Wechat": "联系人微信：xxx"
+  },
+  {
+    "name": "山西校友会",
+    "Contact": "联系人： 王颖琦 Yolanda",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：Cassiopeia_mmmm"
+  },
+  {
+    "name": "福建校友会",
+    "Contact": "联系人： 陈湫 Tim",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：15710098688"
+  },
+  {
+    "name": "武汉校友会",
+    "Contact": "联系人： Zixuan Wang",
+    "phoneNumber": "电话：xxx",
+    "Wechat": "联系人微信：497529180"
   }
+
+
 ]

@@ -35,7 +35,7 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
   List<dynamic> rejectedWareHouseRequests = [];
   List<dynamic> rejectedReturnRequests = [];
 
-  bool _showPending = true;
+  int selectedPageIndex = 0;
   bool _showApproved = true;
 
   @override
@@ -91,6 +91,7 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
       ...Warehouseapproves.where((request) => request['status'] == 'PENDING'),
       ...returnRequests.where((request) => request['status'] == 'PENDING'),
     ];
+    print(Warehouseapproves.last);
 
     setState(() {
       pendingRequests = combinedPendingRequests;
@@ -116,9 +117,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
           r['status'] = 'PENDING';
         }
       });
-
-      bool hasPending = decodedResponse.any((r) => r['status'] == 'PENDING');
-      await prefs.setBool('hasNewReturnRequest', hasPending);
 
       setState(() {
         returnRequests = decodedResponse;
@@ -217,30 +215,24 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('仓库审批', style: TextStyle(color: Colors.white)),
-          backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: '待审核'),
-              Tab(text: '已审核'),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('仓库审批', style: TextStyle(color: Colors.white)),
+        backgroundColor: Color.fromRGBO(29, 32, 136, 1.0),
+      ),
+      body: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildPageButton('待审批', 0),
+              _buildPageButton('已审批', 1),
             ],
-            onTap: (index) {
-              setState(() {
-                _showPending = index == 0;
-              });
-            },
           ),
-        ),
-        body: TabBarView(
-          children: [
-            buildPendingRequestsList(),
-            buildReviewedRequestsList(),
-          ],
-        ),
+          Expanded(
+            child: selectedPageIndex == 0 ? buildPendingRequestsList() : buildReviewedRequestsList(),
+          ),
+        ],
       ),
     );
   }
@@ -254,19 +246,19 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
 
     List<dynamic> reviewedRequests = [
       ...approvedwarehouseRequests,
+...rejectedWareHouseRequests,
       ...approvedreturnRequests,
-      rejectedWareHouseRequests,
-      rejectedReturnRequests,
+...rejectedReturnRequests,
     ];
     return buildRequestList(reviewedRequests, false);
   }
 
-  Widget _buildPageButton(String title, bool isApprovedPage) {
-    bool isSelected = _showApproved == isApprovedPage;
+  Widget _buildPageButton(String title, int index) {
+    bool isSelected = selectedPageIndex == index;
     return ElevatedButton(
       onPressed: () {
         setState(() {
-          _showApproved = isApprovedPage;
+          selectedPageIndex = index;
         });
       },
       child: Text(
@@ -309,7 +301,12 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
         bool isReturnRequest = request['returnItemRequests'] != null;
         String requestType = isReturnRequest ? 'Return Request' : 'Pickup Request';
 
-        String requesterName = request['requesterName'] ?? 'Unknown';
+        String requesterName = 'Unknown';
+        if (request['requesterName'] != null) {
+          List<int> nameBytes = (request['requesterName'] as String).runes.toList();
+          requesterName = utf8.decode(nameBytes);
+        }
+
         String formattedActivityDate = request['activityDate'] != null
             ? DateFormat('yyyy-MM-dd').format(DateTime.parse(request['activityDate']))
             : 'Unknown Date';
@@ -409,12 +406,14 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
 
         String requesterName = 'Unknown';
         if (request['requesterName'] != null) {
-          requesterName = request['requesterName'];
+          List<int> nameBytes = (request['requesterName'] as String).runes.toList();
+          requesterName = utf8.decode(nameBytes);
         }
 
         String activityName = 'Unknown';
         if (request['activityName'] != null) {
-          activityName = request['activityName'];
+          List<int> nameBytes = (request['activityName'] as String).runes.toList();
+          activityName = utf8.decode(nameBytes);
         }
 
         List<TableRow> itemRows = [
@@ -459,7 +458,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
               child: ListBody(
                 children: <Widget>[
                   Text('活动日期: $formattedActivityDate'),
-                  Text('所在部门: ${request['department'] ?? 'Unknown'}'),
                   Text('申请人: $requesterName'),
                   Text('取货日期: ${request['pickupDate'] ?? 'Unknown'}'),
                   Text('使用日期: ${request['usageDate'] ?? 'Unknown'}'),
@@ -514,25 +512,26 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
               padding: EdgeInsets.all(8.0),
               child: Text('请求数量', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            // You might need to adjust if you have a 'category' or other fields to display.
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('类别', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
           ]),
         ];
 
         itemRows.addAll(request['returnItemRequests'].map<TableRow>((itemRequest) {
-          // Check for the presence of 'itemName', if not present, use a placeholder
-          String itemName = itemRequest['item']['itemName'] ?? 'Unknown Item';
-          String requestedQuantity = itemRequest['requestedQuantity'].toString();
-
+          String decodedItemName = utf8.decode(itemRequest['item']['itemName'].runes.toList());
+          String decodedCategory = utf8.decode(itemRequest['item']['category'].runes.toList());
           return TableRow(children: [
             Padding(
               padding: EdgeInsets.all(8.0),
-              child: Text(itemName), // Use the item name directly
+              child: Text(decodedItemName ?? "Unknown"),
             ),
             Padding(
               padding: EdgeInsets.all(8.0),
-              child: Text(requestedQuantity),
+              child: Text('${itemRequest['requestedQuantity']}'),
             ),
-            // Add more cells if you have more fields to display, like 'category'.
+            Padding(padding: EdgeInsets.all(8.0), child: Text(decodedCategory ?? "Unknown")),
           ]);
         }).toList());
 
@@ -549,7 +548,6 @@ class _WarehouseapprovePageState extends State<WarehouseapprovePage> with Ticker
               children: <Widget>[
                 Text('活动名称: $activityName'),
                 Text('活动日期: $formattedActivityDate'),
-                Text('所在部门: ${request['department'] ?? 'Unknown'}'),
                 Text('申请人: $requesterName'),
                 Table(children: itemRows),
               ],

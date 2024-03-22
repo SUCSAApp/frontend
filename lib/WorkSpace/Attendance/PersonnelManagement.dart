@@ -173,6 +173,7 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
                     }
                   }
                 }
+
                 if(count == 1){
                   Navigator.push(context, MaterialPageRoute(builder: (context) => UserUpdatePage(people: updatedPeople,)),);
                 }
@@ -315,6 +316,7 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
           }),
         );
 
+
         if (response.statusCode == 200) {
           print("User deleted successfully");
           members.removeAt(i);
@@ -408,6 +410,7 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
   Future<List<People>> getAllMembers() async{
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
+
     List<People> data = [];
 
     String url = "http://cms.sucsa.org:8005/api/department/list";
@@ -441,6 +444,10 @@ class PersonnelManagementPageState extends State<PersonnelManagementPage> {
             departmentId: myDepartmentId);
         data.add(people);
       });
+    });
+
+    data.forEach((people) {
+      print(people.id);
     });
 
     return data;

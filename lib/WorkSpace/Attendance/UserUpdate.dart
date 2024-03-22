@@ -423,6 +423,7 @@ class UserUpdatePageState extends State<UserUpdatePage> {
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
+    final String? userId = prefs.getString('userId');
     String url = "http://cms.sucsa.org:8005/api/user/update";
     final response = await http.post(Uri.parse(url), headers: {
       "Content-Type": "application/json",
@@ -446,6 +447,9 @@ class UserUpdatePageState extends State<UserUpdatePage> {
           "department": {"id": int.parse(department!)},
         }));
 
+
+
+    print("userid: $id");
     print(response.body);
   }
 
