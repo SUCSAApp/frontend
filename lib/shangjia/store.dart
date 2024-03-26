@@ -7,9 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
-
-
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Restaurant {
   final int id;
@@ -62,6 +60,25 @@ class Restaurant {
       longitude: json['longitude'].toDouble(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date,
+      'description': description,
+      'title': title,
+      'img': img,
+      'tags': tags,
+      'discount': discount,
+      'phone': phone,
+      'address': address,
+      'wechat': wechat,
+      'country': country,
+      'top': top,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+  }
 }
 
 class RestaurantEvent {
@@ -91,8 +108,18 @@ class RestaurantEvent {
       orderNumber: json['orderNumber'],
     );
   }
-}
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date,
+      'link': link,
+      'title': title,
+      'img': img,
+      'orderNumber': orderNumber,
+    };
+  }
+}
 
 class StorePage extends StatefulWidget {
   const StorePage({Key? key}) : super(key: key);
@@ -113,9 +140,32 @@ class _StorePageState extends State<StorePage> {
   @override
   void initState() {
     super.initState();
-    fetchRestaurants();
+
     requestLocationPermission();
-    fetchRestaurantEvents();
+    loadDataFromCache().then((_) {
+      if (restaurants.isEmpty || restaurantEvents.isEmpty) {
+        fetchRestaurants();
+        fetchRestaurantEvents();
+      }
+    });
+  }
+
+  Future<void> loadDataFromCache() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? restaurantsJson = prefs.getStringList('restaurants');
+    List<String>? restaurantEventsJson = prefs.getStringList('restaurantEvents');
+
+    if (restaurantsJson != null) {
+      restaurants = restaurantsJson.map((json) => Restaurant.fromJson(jsonDecode(json))).toList();
+    }
+
+    if (restaurantEventsJson != null) {
+      restaurantEvents = restaurantEventsJson.map((json) => RestaurantEvent.fromJson(jsonDecode(json))).toList();
+    }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> fetchRestaurantEvents() async {
@@ -130,6 +180,7 @@ class _StorePageState extends State<StorePage> {
       List<dynamic> data = json.decode(response.body)['data'];
       setState(() {
         restaurantEvents = data.map((json) => RestaurantEvent.fromJson(json)).toList();
+        cacheData();
       });
     } else {
       print('Failed to fetch events');
@@ -168,6 +219,14 @@ class _StorePageState extends State<StorePage> {
     }
   }
 
+  Future<void> cacheData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> restaurantsJson = restaurants.map((restaurant) => jsonEncode(restaurant.toJson())).toList();
+    List<String> restaurantEventsJson = restaurantEvents.map((event) => jsonEncode(event.toJson())).toList();
+    await prefs.setStringList('restaurants', restaurantsJson);
+    await prefs.setStringList('restaurantEvents', restaurantEventsJson);
+  }
+
 
 
 
@@ -188,6 +247,7 @@ class _StorePageState extends State<StorePage> {
           allRestaurants = fetchedRestaurants;
           restaurants = fetchedRestaurants;
           isLoading = false;
+          cacheData();
         });
       } else {
         throw Exception('Failed to load restaurants');

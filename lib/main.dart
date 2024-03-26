@@ -52,6 +52,11 @@ class _LoginPageState extends State<LoginPage> {
   bool _isRememberMeStaff = false;
   bool _isRememberMeStudent = false;
 
+  String _savedStaffUsername = '';
+  String _savedStaffPassword = '';
+  String _savedStudentId = '';
+  String _savedStudentPassword = '';
+
   @override
   void initState() {
     super.initState();
@@ -78,9 +83,11 @@ class _LoginPageState extends State<LoginPage> {
       if (currentTime - staffLoginTimestamp > 30 * 24 * 60 * 60 * 1000) {
         await prefs.remove('staffUsername');
         await prefs.remove('staffLoginTimestamp');
-      }
-      else {
-        _staffUsernameController.text = prefs.getString('staffUsername') ?? '';
+        _savedStaffUsername = '';
+        _savedStaffPassword = '';
+      } else {
+        _staffUsernameController.text = _savedStaffUsername;
+        _staffPasswordController.text = _savedStaffPassword;
       }
     }
 
@@ -89,9 +96,11 @@ class _LoginPageState extends State<LoginPage> {
       if (currentTime - studentLoginTimestamp > 30 * 24 * 60 * 60 * 1000) {
         await prefs.remove('studentId');
         await prefs.remove('studentLoginTimestamp');
-
+        _savedStudentId = '';
+        _savedStudentPassword = '';
       } else {
-        _studentIdController.text = prefs.getString('studentId') ?? '';
+        _studentIdController.text = _savedStudentId;
+        _studentPasswordController.text = _savedStudentPassword;
       }
     }
   }
@@ -271,6 +280,11 @@ class _LoginPageState extends State<LoginPage> {
         String username = result['result']['username'];
         List<dynamic> roles = result['result']['roles'];
         _saveCredentials(true, token, 'staff');
+
+        if (_isRememberMeStaff) {
+          _savedStaffUsername = _staffUsernameController.text;
+          _savedStaffPassword = _staffPasswordController.text;
+        }
 
 
         SharedPreferences prefs = await SharedPreferences.getInstance();

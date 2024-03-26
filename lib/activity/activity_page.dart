@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({Key? key}) : super(key: key);
@@ -35,6 +38,16 @@ class Activity {
       img: json['img'] as String,
       link: json['link'] as String,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date.toIso8601String(),
+      'id': id,
+      'title': title,
+      'img': img,
+      'link': link,
+    };
   }
 }
 
@@ -71,6 +84,19 @@ class ActivityDetail {
       type: json['type'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'date': date.toIso8601String(),
+      'link': link,
+      'title': title,
+      'description': description,
+      'img': img,
+      'orderNumber': orderNumber,
+      'type': type,
+    };
+  }
 }
 
 
@@ -78,25 +104,63 @@ class _ActivityPageState extends State<ActivityPage> {
   List<Activity> activities = [];
   bool isLoading = true;
   List<ActivityDetail> activityDetails = [];
-  bool isLoadingDetails = true;
+  bool isLoadingFromCache = false;
+  bool isLoadingFromNetwork = false;
+
+  // 定义缓存数据的有效期,例如 24 小时
+  static const Duration cacheValidPeriod = Duration(hours: 24);
+
+  bool _isCacheExpired() {
+    SharedPreferences.getInstance().then((prefs) {
+      final lastCacheTime = prefs.getString('lastCacheTime');
+      if (lastCacheTime == null) {
+        return true; // 没有缓存时间戳,视为缓存过期
+      }
+      final parsedTime = DateTime.parse(lastCacheTime);
+      final now = DateTime.now();
+      return now.difference(parsedTime) > cacheValidPeriod;
+    });
+    return false; // 默认视为未过期
+  }
 
   @override
   void initState() {
     super.initState();
-    fetchActivities().then((_) {
-      setState(() {
-        isLoading = false;
-      });
-    });
-    fetchActivityDetails().then((_) {
-      setState(() {
-        isLoadingDetails = false;
-      });
+    loadActivitiesFromCache().then((_) {
+      if (activities.isEmpty || activityDetails.isEmpty) {
+        fetchActivities();
+        fetchActivityDetails();
+      }
     });
 
   }
 
+  Future<void> loadActivitiesFromCache() async {
+    setState(() {
+      isLoadingFromCache = true;
+    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? activitiesJson = prefs.getStringList('activities');
+    List<String>? activityDetailsJson = prefs.getStringList('activityDetails');
+
+    if (activitiesJson != null) {
+      activities = activitiesJson.map((json) => Activity.fromJson(jsonDecode(json))).toList();
+    }
+
+    if (activityDetailsJson != null) {
+      activityDetails = activityDetailsJson.map((json) => ActivityDetail.fromJson(jsonDecode(json))).toList();
+    }
+
+    setState(() {
+      isLoadingFromCache = false;
+    });
+  }
+
+
   Future<void> fetchActivities() async {
+    setState(() {
+      isLoadingFromNetwork = true;
+    });
     final response = await http.post(
       Uri.parse('https://sucsa.org:8004/api/public/events'),
       headers: <String, String>{
@@ -111,7 +175,7 @@ class _ActivityPageState extends State<ActivityPage> {
         List<dynamic> data = decoded['data'];
         setState(() {
           activities = data.map((json) => Activity.fromJson(json)).toList();
-          isLoading = false;
+          cacheActivities();
         });
       } else {
         print('API responded with error: ${decoded['msg']}');
@@ -119,6 +183,22 @@ class _ActivityPageState extends State<ActivityPage> {
     } else {
       print('Failed to load activities with status code: ${response.statusCode}');
     }
+    setState(() {
+      isLoadingFromNetwork = false;
+    });
+  }
+  Future<void> cacheActivities() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> activitiesJson = activities.map((activity) => jsonEncode(activity.toJson())).toList();
+    await prefs.setStringList('activities', activitiesJson);
+    await prefs.setString('lastCacheTime', DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()));
+  }
+
+  Future<void> cacheActivityDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> activityDetailsJson = activityDetails.map((detail) => jsonEncode(detail.toJson())).toList();
+    await prefs.setStringList('activityDetails', activityDetailsJson);
+    await prefs.setString('lastCacheTime', DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()));
   }
 
   Future<void> fetchActivityDetails() async {
@@ -136,12 +216,14 @@ class _ActivityPageState extends State<ActivityPage> {
         List<dynamic> data = decoded['data'];
         setState(() {
           activityDetails = data.map((json) => ActivityDetail.fromJson(json)).toList();
+          cacheActivityDetails();
         });
       } else {
         print('API responded with error: ${decoded['msg']}');
       }
     } else {
       print('Failed to load activity details with status code: ${response.statusCode}');
+      isLoadingFromNetwork = false;
     }
   }
 
@@ -198,7 +280,7 @@ class _ActivityPageState extends State<ActivityPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading || isLoadingDetails) {
+    if (isLoadingFromNetwork || isLoadingFromCache) {
       return Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );

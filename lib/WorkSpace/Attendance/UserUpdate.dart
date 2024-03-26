@@ -124,7 +124,7 @@ class UserUpdatePageState extends State<UserUpdatePage> {
         degreeDropDownButton("学位"),
         textInput("专业", myControllerMajor),
         semesterDropDownButton("加入学联学期"),
-        semesterDropDownButton("毕业学期"),
+        endSemesterDropDownButton("毕业学期"),
         textInput("USU Number", myControllerUSU),
         dateDropDownButton("USU到期日", date),
         textInput("SID", myControllerSID),
@@ -201,7 +201,7 @@ class UserUpdatePageState extends State<UserUpdatePage> {
     );
   }
 
-  Widget semesterDropDownButton(String defaultInfo1){
+  Widget semesterDropDownButton(String defaultInfo1) {
     return Container(
       margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
       child: Row(
@@ -217,7 +217,8 @@ class UserUpdatePageState extends State<UserUpdatePage> {
               ),
               child: DropdownButton(
                 dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-                value: defaultInfo1 == "加入学联学期"? begin : end, style: const TextStyle(fontSize: 15, color: Colors.black),
+                value: begin != null ? begin : null, // Check if begin is not null
+                style: const TextStyle(fontSize: 15, color: Colors.black),
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down),
                 items: semesterList.map((items) {
@@ -228,19 +229,17 @@ class UserUpdatePageState extends State<UserUpdatePage> {
                 }).toList(),
                 onChanged: (String? value) {
                   setState(() {
-                    switch(defaultInfo1){
-                      case "加入学联学期": begin = value; break;
-                      case "毕业学期": end = value; break;
-                    }
+                    begin = value;
                   });
-                },)
+                },
+              )
           )
         ],
       ),
     );
   }
 
-  Widget sexDropDownButton(String defaultInfo1){
+  Widget endSemesterDropDownButton(String defaultInfo1) {
     return Container(
       margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
       child: Row(
@@ -256,57 +255,102 @@ class UserUpdatePageState extends State<UserUpdatePage> {
               ),
               child: DropdownButton(
                 dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-                value: sex, style: const TextStyle(fontSize: 15, color: Colors.black),
+                value: end != null ? end : null, // Check if end is not null
+                style: const TextStyle(fontSize: 15, color: Colors.black),
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_arrow_down),
+                items: semesterList.map((items) {
+                  return DropdownMenuItem(
+                    value: items["id"].toString(),
+                    child: Text(items["name"]),
+                  );
+                }).toList(),
+                onChanged: (String? value) {
+                  setState(() {
+                    end = value;
+                  });
+                },
+              )
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget sexDropDownButton(String defaultInfo1) {
+    return Container(
+      margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Container(
+              width: 200,
+              padding: const EdgeInsets.only(left: 20, right: 10),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 220, 217, 217),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: DropdownButton<String>(
+                dropdownColor: const Color.fromARGB(255, 220, 217, 217),
+                value: sex, // No need to check for null here
+                style: const TextStyle(fontSize: 15, color: Colors.black),
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down),
                 items: sexList.map((items) {
-                  return DropdownMenuItem(
+                  return DropdownMenuItem<String>(
                     value: items["id"].toString(),
                     child: Text(items["sex"]),
                   );
                 }).toList(),
-                onChanged: (String? value) {
+                onChanged: (String? newValue) {
                   setState(() {
-                    sex = value;
+                    sex = newValue;
                   });
-                },)
+                },
+              )
           )
         ],
       ),
     );
   }
 
-  Widget degreeDropDownButton(String defaultInfo1){
+  Widget degreeDropDownButton(String defaultInfo1) {
     return Container(
       margin: const EdgeInsets.only(left: 30, top: 10, right: 30),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18),),
+          Text("$defaultInfo1 :", style: const TextStyle(fontSize: 18)),
           Container(
-              width: 200,
-              padding: const EdgeInsets.only(left: 20, right: 10),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 220, 217, 217),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: DropdownButton(
+            width: 200,
+            padding: const EdgeInsets.only(left: 20, right: 10),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 220, 217, 217),
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
                 dropdownColor: const Color.fromARGB(255, 220, 217, 217),
-                value: degree, style: const TextStyle(fontSize: 15, color: Colors.black),
+                value: degree, // Set the value to the current degree
+                style: const TextStyle(fontSize: 15, color: Colors.black),
                 isExpanded: true,
                 icon: const Icon(Icons.keyboard_arrow_down),
-                items: degreeList.map((String items) {
-                  return DropdownMenuItem(
-                    value: items,
-                    child: Text(items),
+                hint: const Text('Select Degree'), // Show a hint when degree is null
+                items: degreeList.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
                   );
                 }).toList(),
-                onChanged: (String? value) {
+                onChanged: (String? newValue) {
                   setState(() {
-                    degree = value;
+                    degree = newValue;
                   });
-                },)
-          )
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );
